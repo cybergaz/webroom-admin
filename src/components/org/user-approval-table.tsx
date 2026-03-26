@@ -19,7 +19,7 @@ export function UserApprovalTable({ users, apiPrefix }: UserApprovalTableProps) 
   function handleApprove(user: ManagedUser) {
     startTransition(async () => {
       try {
-        await approveUser(apiPrefix, user.id);
+        await approveUser(user.id);
         toast.success(`${user.name} approved`);
       } catch (e) {
         toast.error((e as Error).message);
@@ -30,7 +30,7 @@ export function UserApprovalTable({ users, apiPrefix }: UserApprovalTableProps) 
   function handleReject(user: ManagedUser) {
     startTransition(async () => {
       try {
-        await rejectUser(apiPrefix, user.id);
+        await rejectUser(user.id);
         toast.success(`${user.name} rejected`);
       } catch (e) {
         toast.error((e as Error).message);

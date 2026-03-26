@@ -20,7 +20,7 @@ export default async function RoomDetailPage({
     notFound();
   }
 
-  const { hosts } = await getHosts("/admin");
+  const { hosts } = await getHosts();
 
   let members: RoomMember[] = [];
   try {

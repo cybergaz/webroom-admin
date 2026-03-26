@@ -3,7 +3,7 @@ import { getHosts } from "@/app/actions/hosts";
 import { RoomForm } from "@/components/org/room-form";
 
 export default async function NewRoomPage() {
-  const { hosts } = await getHosts("/admin");
+  const { hosts } = await getHosts();
 
   return (
     <div className="space-y-6">

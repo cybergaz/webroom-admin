@@ -13,7 +13,7 @@ interface PendingUser {
   id: string;
   name: string;
   phone: string | null;
-  email: string | null;
+  email?: string;
   requestId: string;
   createdAt: string;
 }
