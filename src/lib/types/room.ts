@@ -39,6 +39,17 @@ export interface SpeakingEvent {
   };
 }
 
+export interface RoomWithMembership {
+  isMember: boolean;
+  id: string;
+  name: string;
+  description: string | null;
+  status: "active" | "inactive" | "live" | "ended";
+  getstreamCallId: string;
+  hostId: string | null;
+  createdAt: Date;
+}
+
 export interface CreateRoomRequest {
   name: string;
   description?: string;

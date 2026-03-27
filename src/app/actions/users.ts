@@ -1,22 +1,35 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { apiFetch } from "@/lib/api-client";
 import type { ManagedUser } from "@/lib/types/admin";
 
 export async function getUsers() {
-  return apiFetch<{ users: ManagedUser[] }>("/admin/users");
+  return apiFetch<{ users: ManagedUser[]; }>("/admin/users");
 }
 
-export async function searchPendingUser(requestId: string) {
-  return apiFetch<{ user: ManagedUser & { requestId: string; createdAt: string } }>(
+export type SearchUserCode = "PENDING_APPROVAL" | "AVAILABLE_FOR_ADOPTION" | "ALREADY_ADOPTED";
+export type ApproveUserCode = "APPROVED_AND_ADOPTED" | "ADOPTED" | "ALREADY_ADOPTED";
+
+export interface SearchedUser {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  requestId: string;
+  status: "pending_approval" | "approved";
+  createdByUserId?: string;
+  createdAt: string;
+}
+
+export async function searchUser(requestId: string) {
+  return apiFetch<{ user: SearchedUser; code: SearchUserCode; }>(
     `/admin/users/search?requestId=${encodeURIComponent(requestId)}`
   );
 }
 
 export async function createUser(
-  _prevState: { error?: string } | null,
+  _prevState: { error?: string; } | null,
   formData: FormData
 ) {
   const name = formData.get("name") as string;
@@ -41,12 +54,12 @@ export async function createUser(
   }
 
   revalidatePath("/admin/users");
-  redirect("/admin/users");
+  return { success: true };
 }
 
 export async function updateUser(
   userId: string,
-  _prevState: { error?: string } | null,
+  _prevState: { error?: string; } | null,
   formData: FormData
 ) {
   const name = (formData.get("name") as string) || undefined;
@@ -62,24 +75,35 @@ export async function updateUser(
   }
 
   revalidatePath("/admin/users");
-  redirect("/admin/users");
+  return { success: true };
 }
 
 export async function approveUser(userId: string, temporaryPassword?: string) {
-  await apiFetch(`/admin/users/${userId}/approve`, {
-    method: "POST",
-    body: temporaryPassword ? { temporaryPassword } : {},
-  });
-  revalidatePath("/admin/users/pending");
+  const result = await apiFetch<{ id: string; status: string; code: ApproveUserCode; }>(
+    `/admin/users/${userId}/approve`,
+    { method: "POST", body: temporaryPassword ? { temporaryPassword } : {} }
+  );
+  revalidatePath("/admin/new-users");
   revalidatePath("/admin/users");
+  return result;
 }
 
 export async function rejectUser(userId: string) {
   await apiFetch(`/admin/users/${userId}/reject`, {
     method: "POST",
   });
-  revalidatePath("/admin/users/pending");
+  revalidatePath("/admin/new-users");
   revalidatePath("/admin/users");
+}
+
+export async function adoptUser(userId: string) {
+  await apiFetch(`/admin/users/${userId}/adopt`, { method: "POST" });
+  revalidatePath("/admin/new-users");
+}
+
+export async function unadoptUser(userId: string) {
+  await apiFetch(`/admin/users/${userId}/adopt`, { method: "DELETE" });
+  revalidatePath("/admin/new-users");
 }
 
 export async function activateUser(userId: string) {

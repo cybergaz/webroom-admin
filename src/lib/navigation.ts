@@ -45,7 +45,7 @@ const ADMIN_NAV: NavGroup[] = [
     label: "People",
     items: [
       { label: "Users", href: "/admin/users", icon: Users },
-      { label: "Approve User", href: "/admin/users/pending", icon: UserCheck },
+      { label: "New Users", href: "/admin/new-users", icon: UserCheck },
       { label: "Hosts", href: "/admin/hosts", icon: Mic },
     ],
   },

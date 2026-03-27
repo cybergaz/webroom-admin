@@ -1,28 +1,92 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { DataTable, type Column } from "@/components/ui/data-table";
-import { MoreHorizontal, Pencil, Power, PowerOff, Trash2 } from "lucide-react";
-import { activateHost, deactivateHost, deleteHost } from "@/app/actions/hosts";
+import { Pencil, Power, PowerOff, Trash2, DoorOpen, Check } from "lucide-react";
+import { activateHost, deactivateHost, deleteHost, updateHost } from "@/app/actions/hosts";
+import { getRoomsForUser, assignHost, unassignHost } from "@/app/actions/rooms";
+import { HostForm } from "@/components/org/host-form";
 import type { Host } from "@/lib/types/admin";
+import type { RoomWithMembership } from "@/lib/types/room";
 
 interface HostTableProps {
   hosts: Host[];
-  basePath: string;
 }
 
-export function HostTable({ hosts, basePath }: HostTableProps) {
+export function HostTable({ hosts }: HostTableProps) {
   const [isPending, startTransition] = useTransition();
+  const [editingHost, setEditingHost] = useState<Host | null>(null);
+  const [deletingHost, setDeletingHost] = useState<Host | null>(null);
+  const [assigningHost, setAssigningHost] = useState<Host | null>(null);
+  const [rooms, setRooms] = useState<RoomWithMembership[]>([]);
+  const [roomSearch, setRoomSearch] = useState("");
+  const [selectedRoomIds, setSelectedRoomIds] = useState<Set<string>>(new Set());
+  const [originalMemberIds, setOriginalMemberIds] = useState<Set<string>>(new Set());
+
+  function openAssignRooms(host: Host) {
+    setAssigningHost(host);
+    setRoomSearch("");
+    getRoomsForUser(host.id).then(({ rooms: data }) => {
+      setRooms(data);
+      const memberIds = new Set(data.filter((r) => r.isMember).map((r) => r.id));
+      setSelectedRoomIds(memberIds);
+      setOriginalMemberIds(memberIds);
+    });
+  }
+
+  function toggleRoom(roomId: string) {
+    setSelectedRoomIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(roomId)) next.delete(roomId);
+      else next.add(roomId);
+      return next;
+    });
+  }
+
+  function handleAssignRooms() {
+    if (!assigningHost) return;
+    const toAdd = Array.from(selectedRoomIds).filter((id) => !originalMemberIds.has(id));
+    const toRemove = Array.from(originalMemberIds).filter((id) => !selectedRoomIds.has(id));
+    if (toAdd.length === 0 && toRemove.length === 0) {
+      setAssigningHost(null);
+      return;
+    }
+    startTransition(async () => {
+      try {
+        await Promise.all([
+          ...toAdd.map((roomId) => assignHost(roomId, assigningHost.id)),
+          ...toRemove.map((roomId) => unassignHost(roomId)),
+        ]);
+        const parts = [];
+        if (toAdd.length > 0) parts.push(`added to ${toAdd.length} room(s)`);
+        if (toRemove.length > 0) parts.push(`removed from ${toRemove.length} room(s)`);
+        toast.success(`${assigningHost.name} ${parts.join(", ")}`);
+        setAssigningHost(null);
+      } catch (e) {
+        toast.error((e as Error).message);
+      }
+    });
+  }
 
   function handleAction(action: () => Promise<void>, msg: string) {
     startTransition(async () => {
@@ -64,59 +128,148 @@ export function HostTable({ hosts, basePath }: HostTableProps) {
     },
     {
       key: "actions",
-      header: "",
-      className: "w-12",
+      header: "Actions",
+      className: "w-px whitespace-nowrap",
       render: (h) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger className="inline-flex size-8 items-center justify-center rounded-lg hover:bg-muted transition-colors outline-none">
-            <MoreHorizontal className="size-4" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>
-              <Link href={`${basePath}/${h.id}`} className="flex items-center gap-2">
-                <Pencil className="size-4" />
-                Edit
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            {h.status === "approved" ? (
-              <DropdownMenuItem
-                onClick={() => handleAction(() => deactivateHost(h.id), `${h.name} deactivated`)}
-                disabled={isPending}
-              >
-                <PowerOff className="size-4" />
-                Deactivate
-              </DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem
-                onClick={() => handleAction(() => activateHost(h.id), `${h.name} activated`)}
-                disabled={isPending}
-              >
-                <Power className="size-4" />
-                Activate
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              variant="destructive"
-              onClick={() => handleAction(() => deleteHost(h.id), `${h.name} deleted`)}
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" onClick={() => setEditingHost(h)}>
+            <Pencil className="size-4" />
+            Edit
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => openAssignRooms(h)}>
+            <DoorOpen className="size-4" />
+            Assign Rooms
+          </Button>
+          {h.status === "approved" ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleAction(() => deactivateHost(h.id), `${h.name} deactivated`)}
               disabled={isPending}
             >
-              <Trash2 className="size-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <PowerOff className="size-4" />
+              Deactivate
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleAction(() => activateHost(h.id), `${h.name} activated`)}
+              disabled={isPending}
+            >
+              <Power className="size-4" />
+              Activate
+            </Button>
+          )}
+          <Button
+            variant="destructive"
+            size="sm"
+            className="text-destructive hover:text-destructive"
+            onClick={() => setDeletingHost(h)}
+            disabled={isPending}
+          >
+            <Trash2 className="size-4" />
+            Delete
+          </Button>
+        </div>
       ),
     },
   ];
 
   return (
-    <DataTable
-      columns={columns}
-      data={hosts}
-      showSearch={false}
-      emptyMessage="No hosts found."
-    />
+    <>
+      <DataTable
+        columns={columns}
+        data={hosts}
+        showSearch={false}
+        emptyMessage="No hosts found."
+      />
+      <AlertDialog open={deletingHost !== null} onOpenChange={(open) => !open && setDeletingHost(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {deletingHost?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deletingHost) {
+                  handleAction(() => deleteHost(deletingHost.id), `${deletingHost.name} deleted`);
+                  setDeletingHost(null);
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <Dialog open={assigningHost !== null} onOpenChange={(open) => !open && setAssigningHost(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assign Rooms — {assigningHost?.name}</DialogTitle>
+          </DialogHeader>
+          <Input
+            placeholder="Search rooms..."
+            value={roomSearch}
+            onChange={(e) => setRoomSearch(e.target.value)}
+          />
+          <div className="max-h-64 overflow-y-auto space-y-1 mt-1">
+            {rooms
+              .filter((r) => r.name.toLowerCase().includes(roomSearch.toLowerCase()))
+              .map((r) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => toggleRoom(r.id)}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors border border-zinc-600/15 cursor-pointer ${selectedRoomIds.has(r.id)
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-muted"
+                    }`}
+                >
+                  {r.name}
+                  {selectedRoomIds.has(r.id) && <Check className="size-4 shrink-0" />}
+                </button>
+              ))}
+            {rooms.filter((r) => r.name.toLowerCase().includes(roomSearch.toLowerCase())).length === 0 && (
+              <p className="text-sm text-muted-foreground px-3 py-2">No rooms found.</p>
+            )}
+          </div>
+          <div className="flex justify-end gap-2 mt-2">
+            <Button variant="outline" onClick={() => setAssigningHost(null)}>Cancel</Button>
+            <Button
+              onClick={handleAssignRooms}
+              disabled={isPending || (
+                Array.from(selectedRoomIds).every((id) => originalMemberIds.has(id)) &&
+                Array.from(originalMemberIds).every((id) => selectedRoomIds.has(id))
+              )}
+            >
+              Save
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={editingHost !== null} onOpenChange={(open) => !open && setEditingHost(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Host</DialogTitle>
+          </DialogHeader>
+          {editingHost && (
+            <HostForm
+              key={editingHost.id}
+              action={updateHost.bind(null, editingHost.id)}
+              defaultValues={{ name: editingHost.name, email: editingHost.email }}
+              isEdit
+              onClose={() => setEditingHost(null)}
+              onSuccess={() => setEditingHost(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

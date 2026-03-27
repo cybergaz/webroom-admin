@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { apiFetch } from "@/lib/api-client";
 import type { Host } from "@/lib/types/admin";
 
@@ -35,7 +34,7 @@ export async function createHost(
   }
 
   revalidatePath("/admin/hosts");
-  redirect("/admin/hosts");
+  return { success: true };
 }
 
 export async function updateHost(
@@ -56,7 +55,7 @@ export async function updateHost(
   }
 
   revalidatePath("/admin/hosts");
-  redirect("/admin/hosts");
+  return { success: true };
 }
 
 export async function activateHost(hostId: string) {

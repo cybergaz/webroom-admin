@@ -4,6 +4,7 @@ import { LogOut } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -38,16 +39,18 @@ export function Header({ userName, role }: HeaderProps) {
             <span className="hidden sm:inline">{userName}</span>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuLabel>
-              <div className="flex flex-col">
-                <span>{userName}</span>
-                <span className="text-xs font-normal text-muted-foreground capitalize">
-                  {role.replace("_", " ")}
-                </span>
-              </div>
-            </DropdownMenuLabel>
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>
+                <div className="flex flex-col">
+                  <span>{userName}</span>
+                  <span className="text-xs font-normal text-muted-foreground capitalize">
+                    {role.replace("_", " ")}
+                  </span>
+                </div>
+              </DropdownMenuLabel>
+            </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => logout()}>
+            <DropdownMenuItem onClick={() => logout()} variant="destructive">
               <LogOut className="mr-2 size-4" />
               Sign Out
             </DropdownMenuItem>

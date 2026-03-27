@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { apiFetch } from "@/lib/api-client";
 import type { Admin } from "@/lib/types/admin";
 
@@ -37,7 +36,7 @@ export async function createAdmin(
   }
 
   revalidatePath("/super-admin/admins");
-  redirect("/super-admin/admins");
+  return { success: true };
 }
 
 export async function updateAdmin(
@@ -58,7 +57,7 @@ export async function updateAdmin(
   }
 
   revalidatePath("/super-admin/admins");
-  redirect("/super-admin/admins");
+  return { success: true };
 }
 
 export async function activateAdmin(adminId: string) {

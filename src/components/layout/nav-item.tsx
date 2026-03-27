@@ -5,14 +5,9 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import type { NavItem as NavItemType } from "@/lib/navigation";
 
-export function NavItem({ item }: { item: NavItemType }) {
+export function NavItem({ item }: { item: NavItemType; }) {
   const pathname = usePathname();
-  const isActive =
-    pathname === item.href ||
-    (item.href !== "/super-admin" &&
-      item.href !== "/org" &&
-      pathname.startsWith(item.href));
-
+  const isActive = pathname === item.href;
   return (
     <Link
       href={item.href}

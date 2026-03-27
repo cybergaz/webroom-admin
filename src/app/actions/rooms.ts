@@ -1,16 +1,19 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { apiFetch } from "@/lib/api-client";
-import type { Room, RoomSession } from "@/lib/types/room";
+import type { Room, RoomSession, RoomWithMembership } from "@/lib/types/room";
 
 export async function getRooms() {
-  return apiFetch<{ rooms: Room[] }>("/admin/rooms");
+  return apiFetch<{ rooms: Room[]; }>("/admin/rooms");
+}
+
+export async function getRoomsForUser(userId: string) {
+  return apiFetch<{ rooms: RoomWithMembership[]; }>(`/admin/rooms-with-membership/${userId}`);
 }
 
 export async function createRoom(
-  _prevState: { error?: string } | null,
+  _prevState: { error?: string; } | null,
   formData: FormData
 ) {
   const name = formData.get("name") as string;
@@ -29,7 +32,7 @@ export async function createRoom(
   }
 
   revalidatePath("/admin/rooms");
-  redirect("/admin/rooms");
+  return { success: true };
 }
 
 export async function deleteRoom(roomId: string) {
@@ -108,10 +111,23 @@ export async function assignHost(roomId: string, hostId: string) {
   revalidatePath("/admin/rooms");
 }
 
+export async function unassignHost(roomId: string) {
+  await apiFetch(`/rooms/${roomId}/unassign-host`, { method: "POST" });
+  revalidatePath(`/admin/rooms/${roomId}`);
+  revalidatePath("/admin/rooms");
+}
+
 export async function getSessions() {
-  return apiFetch<{ sessions: RoomSession[] }>("/admin/sessions");
+  return apiFetch<{ sessions: RoomSession[]; }>("/admin/sessions");
 }
 
 export async function getRoomSessions(roomId: string) {
-  return apiFetch<{ sessions: RoomSession[] }>(`/admin/sessions/${roomId}`);
+  return apiFetch<{ sessions: RoomSession[]; }>(`/admin/sessions/${roomId}`);
+}
+
+export async function assignUserToRooms(userId: string, roomIds: string[]) {
+  return apiFetch("/rooms/members", {
+    method: "POST",
+    body: { userId, roomIds },
+  });
 }

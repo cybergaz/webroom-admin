@@ -1,23 +1,27 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
-import Link from "next/link";
 
 interface UserEditFormProps {
   action: (
-    prevState: { error?: string } | null,
+    prevState: { error?: string; success?: boolean } | null,
     formData: FormData
-  ) => Promise<{ error?: string } | null>;
+  ) => Promise<{ error?: string; success?: boolean } | null>;
   defaultValues: { name: string; email?: string };
-  cancelHref: string;
+  onClose?: () => void;
+  onSuccess?: () => void;
 }
 
-export function UserEditForm({ action, defaultValues, cancelHref }: UserEditFormProps) {
+export function UserEditForm({ action, defaultValues, onClose, onSuccess }: UserEditFormProps) {
   const [state, formAction, isPending] = useActionState(action, null);
+
+  useEffect(() => {
+    if (state?.success) onSuccess?.();
+  }, [state?.success]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <form action={formAction} className="space-y-4">
@@ -53,9 +57,11 @@ export function UserEditForm({ action, defaultValues, cancelHref }: UserEditForm
         <Button type="submit" disabled={isPending}>
           {isPending ? <Spinner className="size-4" /> : "Save"}
         </Button>
-        <Button variant="outline" type="button">
-          <Link href={cancelHref}>Cancel</Link>
-        </Button>
+        {onClose && (
+          <Button variant="outline" type="button" onClick={onClose}>
+            Cancel
+          </Button>
+        )}
       </div>
     </form>
   );

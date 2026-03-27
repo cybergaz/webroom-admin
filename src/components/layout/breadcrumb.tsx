@@ -14,6 +14,7 @@ const LABEL_MAP: Record<string, string> = {
   sessions: "Sessions",
   pending: "Pending",
   new: "New",
+  "new-users": "New Users",
 };
 
 export function Breadcrumb() {

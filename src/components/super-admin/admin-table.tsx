@@ -1,23 +1,35 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
-import { MoreHorizontal, Pencil, Power, PowerOff, Trash2 } from "lucide-react";
-import { activateAdmin, deactivateAdmin, deleteAdmin } from "@/app/actions/admins";
+import { Pencil, Power, PowerOff, Trash2 } from "lucide-react";
+import { activateAdmin, deactivateAdmin, deleteAdmin, updateAdmin } from "@/app/actions/admins";
+import { AdminForm } from "@/components/super-admin/admin-form";
 import type { Admin } from "@/lib/types/admin";
 
-export function AdminTable({ admins }: { admins: Admin[] }) {
+export function AdminTable({ admins }: { admins: Admin[]; }) {
   const [isPending, startTransition] = useTransition();
+  const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null);
+  const [deletingAdmin, setDeletingAdmin] = useState<Admin | null>(null);
 
   function handleAction(action: () => Promise<void>, msg: string) {
     startTransition(async () => {
@@ -59,62 +71,99 @@ export function AdminTable({ admins }: { admins: Admin[] }) {
     },
     {
       key: "actions",
-      header: "",
-      className: "w-12",
+      header: "Actions",
+      className: "w-px whitespace-nowrap",
       render: (a) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger className="inline-flex size-8 items-center justify-center rounded-lg hover:bg-muted transition-colors outline-none">
-            <MoreHorizontal className="size-4" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>
-              <Link
-                href={`/super-admin/admins/${a.id}`}
-                className="flex items-center gap-2"
-              >
-                <Pencil className="size-4" />
-                Edit
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            {a.status === "approved" ? (
-              <DropdownMenuItem
-                onClick={() => handleAction(() => deactivateAdmin(a.id), `${a.name} deactivated`)}
-                disabled={isPending}
-              >
-                <PowerOff className="size-4" />
-                Deactivate
-              </DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem
-                onClick={() => handleAction(() => activateAdmin(a.id), `${a.name} activated`)}
-                disabled={isPending}
-              >
-                <Power className="size-4" />
-                Activate
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              variant="destructive"
-              onClick={() => handleAction(() => deleteAdmin(a.id), `${a.name} deleted`)}
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" onClick={() => setEditingAdmin(a)}>
+            <Pencil className="size-4" />
+            Edit
+          </Button>
+          {a.status === "approved" ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleAction(() => deactivateAdmin(a.id), `${a.name} deactivated`)}
               disabled={isPending}
             >
-              <Trash2 className="size-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <PowerOff className="size-4" />
+              Deactivate
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleAction(() => activateAdmin(a.id), `${a.name} activated`)}
+              disabled={isPending}
+            >
+              <Power className="size-4" />
+              Activate
+            </Button>
+          )}
+          <Button
+            variant="destructive"
+            size="sm"
+            className="text-destructive hover:text-destructive"
+            onClick={() => setDeletingAdmin(a)}
+            disabled={isPending}
+          >
+            <Trash2 className="size-4" />
+            Delete
+          </Button>
+        </div>
       ),
     },
   ];
 
   return (
-    <DataTable
-      columns={columns}
-      data={admins}
-      showSearch={false}
-      emptyMessage="No admins found."
-    />
+    <>
+      <DataTable
+        columns={columns}
+        data={admins}
+        showSearch={false}
+        emptyMessage="No admins found."
+      />
+      <AlertDialog open={deletingAdmin !== null} onOpenChange={(open) => !open && setDeletingAdmin(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {deletingAdmin?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deletingAdmin) {
+                  handleAction(() => deleteAdmin(deletingAdmin.id), `${deletingAdmin.name} deleted`);
+                  setDeletingAdmin(null);
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <Dialog open={editingAdmin !== null} onOpenChange={(open) => !open && setEditingAdmin(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Admin</DialogTitle>
+          </DialogHeader>
+          {editingAdmin && (
+            <AdminForm
+              key={editingAdmin.id}
+              action={updateAdmin.bind(null, editingAdmin.id)}
+              defaultValues={{ name: editingAdmin.name, email: editingAdmin.email }}
+              isEdit
+              onClose={() => setEditingAdmin(null)}
+              onSuccess={() => setEditingAdmin(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

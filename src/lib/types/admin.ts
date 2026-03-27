@@ -31,11 +31,13 @@ export interface CreateHostRequest {
 
 export interface ManagedUser {
   id: string;
+  requestId: string;
   name: string;
   phone: string;
   email?: string;
   role: "user";
   status: "pending_approval" | "approved" | "rejected";
+  createdAt: string;
 }
 
 export interface CreateUserRequest {

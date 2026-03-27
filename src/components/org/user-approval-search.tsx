@@ -5,22 +5,26 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, X, Search } from "lucide-react";
-import { searchPendingUser, approveUser, rejectUser } from "@/app/actions/users";
+import { Badge } from "@/components/ui/badge";
+import { Check, X, UserPlus, Search, Info } from "lucide-react";
+import { searchUser, approveUser, rejectUser } from "@/app/actions/users";
+import type { SearchedUser, SearchUserCode } from "@/app/actions/users";
 import { Spinner } from "@/components/ui/spinner";
 
-interface PendingUser {
-  id: string;
-  name: string;
-  phone: string | null;
-  email?: string;
-  requestId: string;
-  createdAt: string;
+interface SearchResult {
+  user: SearchedUser;
+  code: SearchUserCode;
 }
+
+const APPROVE_TOAST: Record<string, string> = {
+  APPROVED_AND_ADOPTED: "approved and added to your list",
+  ADOPTED: "added to your list",
+  ALREADY_ADOPTED: "is already in your list",
+};
 
 export function UserApprovalSearch() {
   const [requestId, setRequestId] = useState("");
-  const [user, setUser] = useState<PendingUser | null>(null);
+  const [result, setResult] = useState<SearchResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSearching, startSearch] = useTransition();
   const [isActing, startAction] = useTransition();
@@ -28,14 +32,12 @@ export function UserApprovalSearch() {
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     if (!requestId.trim()) return;
-
     setError(null);
-    setUser(null);
-
+    setResult(null);
     startSearch(async () => {
       try {
-        const result = await searchPendingUser(requestId.trim().toUpperCase());
-        setUser(result.user);
+        const data = await searchUser(requestId.trim().toUpperCase());
+        setResult(data);
       } catch (e) {
         setError((e as Error).message);
       }
@@ -43,12 +45,12 @@ export function UserApprovalSearch() {
   }
 
   function handleApprove() {
-    if (!user) return;
+    if (!result) return;
     startAction(async () => {
       try {
-        await approveUser(user.id);
-        toast.success(`${user.name} approved`);
-        setUser(null);
+        const { code } = await approveUser(result.user.id);
+        toast.success(`${result.user.name} ${APPROVE_TOAST[code] ?? "processed"}`);
+        setResult(null);
         setRequestId("");
       } catch (e) {
         toast.error((e as Error).message);
@@ -57,18 +59,20 @@ export function UserApprovalSearch() {
   }
 
   function handleReject() {
-    if (!user) return;
+    if (!result) return;
     startAction(async () => {
       try {
-        await rejectUser(user.id);
-        toast.success(`${user.name} rejected`);
-        setUser(null);
+        await rejectUser(result.user.id);
+        toast.success(`${result.user.name} rejected`);
+        setResult(null);
         setRequestId("");
       } catch (e) {
         toast.error((e as Error).message);
       }
     });
   }
+
+  const { user, code } = result ?? {};
 
   return (
     <div className="space-y-4 max-w-lg">
@@ -92,10 +96,21 @@ export function UserApprovalSearch() {
         </div>
       )}
 
-      {user && (
+      {user && code && (
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">User Found</CardTitle>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">User Found</CardTitle>
+              {code === "PENDING_APPROVAL" && (
+                <Badge variant="secondary">Pending Approval</Badge>
+              )}
+              {code === "AVAILABLE_FOR_ADOPTION" && (
+                <Badge variant="default">Approved</Badge>
+              )}
+              {code === "ALREADY_ADOPTED" && (
+                <Badge variant="outline">In Your List</Badge>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="grid grid-cols-2 gap-2 text-sm">
@@ -123,16 +138,44 @@ export function UserApprovalSearch() {
               <span>{new Date(user.createdAt).toLocaleDateString()}</span>
             </div>
 
-            <div className="flex gap-2 pt-2">
-              <Button onClick={handleApprove} disabled={isActing}>
-                <Check className="size-4" />
-                Approve
-              </Button>
-              <Button variant="destructive" onClick={handleReject} disabled={isActing}>
-                <X className="size-4" />
-                Reject
-              </Button>
-            </div>
+            {code === "PENDING_APPROVAL" && (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  This user is waiting for approval. Approving will grant access and add them to your list.
+                </p>
+                <div className="flex gap-2 pt-1">
+                  <Button onClick={handleApprove} disabled={isActing}>
+                    <Check className="size-4" />
+                    Approve &amp; Onboard
+                  </Button>
+                  <Button variant="destructive" onClick={handleReject} disabled={isActing}>
+                    <X className="size-4" />
+                    Reject
+                  </Button>
+                </div>
+              </>
+            )}
+
+            {code === "AVAILABLE_FOR_ADOPTION" && (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  This user is already approved. Onboarding will add them to your list so you can manage their account.
+                </p>
+                <div className="flex gap-2 pt-1">
+                  <Button onClick={handleApprove} disabled={isActing}>
+                    <UserPlus className="size-4" />
+                    Onboard
+                  </Button>
+                </div>
+              </>
+            )}
+
+            {code === "ALREADY_ADOPTED" && (
+              <div className="flex items-start gap-2 rounded-md bg-muted p-3 text-sm text-muted-foreground">
+                <Info className="size-4 mt-0.5 shrink-0" />
+                This user is already in your list.
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

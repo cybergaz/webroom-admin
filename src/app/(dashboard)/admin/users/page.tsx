@@ -7,7 +7,7 @@ export default async function UsersPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Users</h1>
-      <UserTable users={users} basePath="/admin/users" />
+      <UserTable users={users} />
     </div>
   );
 }
