@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { API_BASE_URL } from "@/lib/constants";
+import { API_BASE_URL, WS_BASE_URL } from "@/lib/constants";
 
 export interface WsEvent {
   event: string;
@@ -24,7 +24,7 @@ export function useWebSocket({ token, onEvent }: UseWebSocketOptions) {
   const connect = useCallback(() => {
     if (!token) return;
 
-    const wsUrl = `${API_BASE_URL.replace(/^http/, "ws")}/v1/ws?token=${token}`;
+    const wsUrl = `${WS_BASE_URL}?token=${token}`;
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
