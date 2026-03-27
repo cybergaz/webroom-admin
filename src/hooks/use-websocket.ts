@@ -5,6 +5,7 @@ import { API_BASE_URL } from "@/lib/constants";
 
 export interface WsEvent {
   event: string;
+  payload?: Record<string, unknown>;
   data?: Record<string, unknown>;
 }
 

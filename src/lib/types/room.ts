@@ -55,3 +55,14 @@ export interface CreateRoomRequest {
   description?: string;
   hostId?: string;
 }
+
+export interface LiveRoomParticipant {
+  userId: string;
+  name: string;
+}
+
+export interface LiveRoom {
+  id: string;
+  name: string;
+  participants: LiveRoomParticipant[];
+}

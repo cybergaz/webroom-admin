@@ -22,7 +22,7 @@ export function RoomLiveMonitor({ roomId, token }: RoomLiveMonitorProps) {
 
   const handleEvent = useCallback(
     (event: WsEvent) => {
-      const data = event.data as Record<string, string> | undefined;
+      const data = (event.payload ?? event.data) as Record<string, string> | undefined;
       if (data?.roomId !== roomId) return;
 
       switch (event.event) {

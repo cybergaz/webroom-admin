@@ -5,6 +5,7 @@ import {
   Mic,
   DoorOpen,
   History,
+  Activity,
   ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
@@ -53,6 +54,7 @@ const ADMIN_NAV: NavGroup[] = [
     label: "Rooms",
     items: [
       { label: "Rooms", href: "/admin/rooms", icon: DoorOpen },
+      { label: "Room Activity", href: "/admin/room-activity", icon: Activity },
       { label: "Sessions", href: "/admin/sessions", icon: History },
     ],
   },
