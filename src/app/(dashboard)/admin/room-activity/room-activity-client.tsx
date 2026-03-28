@@ -32,14 +32,20 @@ interface Participant {
 interface RoomState {
   id: string;
   name: string;
+  hostId: string | null;
+  hostName: string | null;
   participants: Map<string, Participant>;
 }
 
 type Layout = "grid" | "table";
 
+const SPEAKING_STOP_DELAY = Number(
+  process.env.NEXT_PUBLIC_SPEAKING_STOP_DELAY_MS ?? 2000
+);
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function RoomActivityClient({ token }: { token: string | null }) {
+export function RoomActivityClient({ token }: { token: string | null; }) {
   const [availableRooms, setAvailableRooms] = useState<LiveRoom[]>([]);
   const [selectedRoomIds, setSelectedRoomIds] = useState<Set<string>>(
     new Set()
@@ -51,6 +57,7 @@ export function RoomActivityClient({ token }: { token: string | null }) {
   const [isPending, startTransition] = useTransition();
   const roomsRef = useRef(rooms);
   roomsRef.current = rooms;
+  const stopTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   // Fetch available live rooms
   const fetchLiveRooms = useCallback(() => {
@@ -65,6 +72,35 @@ export function RoomActivityClient({ token }: { token: string | null }) {
   }, []);
 
   // Handle WS events
+  const setSpeaking = useCallback(
+    (roomId: string, userId: string, userName: string | undefined, speaking: boolean) => {
+      setRooms((prev) => {
+        const room = prev.get(roomId);
+        if (!room) return prev;
+
+        const participants = new Map(room.participants);
+        const existing = participants.get(userId);
+
+        if (speaking) {
+          participants.set(userId, {
+            userId,
+            name: existing?.name ?? userName ?? "Unknown",
+            isSpeaking: true,
+          });
+        } else if (existing) {
+          participants.set(userId, { ...existing, isSpeaking: false });
+        } else {
+          return prev;
+        }
+
+        const next = new Map(prev);
+        next.set(roomId, { ...room, participants });
+        return next;
+      });
+    },
+    []
+  );
+
   const handleEvent = useCallback(
     (event: WsEvent) => {
       const payload = (event.payload ?? event.data ?? {}) as Record<string, string>;
@@ -77,32 +113,34 @@ export function RoomActivityClient({ token }: { token: string | null }) {
       )
         return;
 
-      setRooms((prev) => {
-        const room = prev.get(roomId);
-        if (!room) return prev;
+      // Check host from current rooms state
+      const room = roomsRef.current.get(roomId);
+      if (room?.hostId && userId === room.hostId) return;
 
-        const next = new Map(prev);
-        const participants = new Map(room.participants);
+      const timerKey = `${roomId}:${userId}`;
 
-        if (event.event === "speaking.start") {
-          const existing = participants.get(userId);
-          participants.set(userId, {
-            userId,
-            name: existing?.name ?? userName ?? "Unknown",
-            isSpeaking: true,
-          });
-        } else {
-          const existing = participants.get(userId);
-          if (existing) {
-            participants.set(userId, { ...existing, isSpeaking: false });
-          }
+      if (event.event === "speaking.start") {
+        // Cancel any pending stop for this user
+        const existing = stopTimers.current.get(timerKey);
+        if (existing) {
+          clearTimeout(existing);
+          stopTimers.current.delete(timerKey);
         }
-
-        next.set(roomId, { ...room, participants });
-        return next;
-      });
+        setSpeaking(roomId, userId, userName, true);
+      } else {
+        // Debounce the stop event
+        const existing = stopTimers.current.get(timerKey);
+        if (existing) clearTimeout(existing);
+        stopTimers.current.set(
+          timerKey,
+          setTimeout(() => {
+            stopTimers.current.delete(timerKey);
+            setSpeaking(roomId, userId, undefined, false);
+          }, SPEAKING_STOP_DELAY)
+        );
+      }
     },
-    []
+    [setSpeaking]
   );
 
   const { isConnected } = useWebSocket({ token, onEvent: handleEvent });
@@ -130,7 +168,7 @@ export function RoomActivityClient({ token }: { token: string | null }) {
             isSpeaking: false,
           });
         }
-        roomMap.set(room.id, { id: room.id, name: room.name, participants });
+        roomMap.set(room.id, { id: room.id, name: room.name, hostId: room.hostId, hostName: room.hostName, participants });
       }
     }
     setRooms(roomMap);
@@ -186,11 +224,10 @@ export function RoomActivityClient({ token }: { token: string | null }) {
                     className="flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors hover:bg-muted"
                   >
                     <div
-                      className={`flex size-5 shrink-0 items-center justify-center rounded border ${
-                        selectedRoomIds.has(room.id)
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "border-muted-foreground/30"
-                      }`}
+                      className={`flex size-5 shrink-0 items-center justify-center rounded border ${selectedRoomIds.has(room.id)
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-muted-foreground/30"
+                        }`}
                     >
                       {selectedRoomIds.has(room.id) && (
                         <Check className="size-3" />
@@ -303,9 +340,16 @@ export function RoomActivityClient({ token }: { token: string | null }) {
               >
                 {/* Room header */}
                 <div className="flex items-center justify-between border-b px-4 py-3">
-                  <h3 className="text-sm font-semibold truncate">
-                    {room.name}
-                  </h3>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold truncate">
+                      {room.name}
+                    </h3>
+                    {room.hostName && (
+                      <p className="text-xs text-muted-foreground truncate">
+                        Host: {room.hostName}
+                      </p>
+                    )}
+                  </div>
                   {speakingCount > 0 && (
                     <Badge variant="default" className="ml-2 shrink-0">
                       {speakingCount} speaking
@@ -323,19 +367,17 @@ export function RoomActivityClient({ token }: { token: string | null }) {
                       {sorted.map((p) => (
                         <div
                           key={p.userId}
-                          className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-colors ${
-                            p.isSpeaking
-                              ? "border-green-500/50 bg-green-500/10"
-                              : ""
-                          }`}
-                        >
-                          <div
-                            className={`size-2 shrink-0 rounded-full ${
-                              p.isSpeaking
-                                ? "bg-green-500 animate-pulse"
-                                : "bg-muted-foreground/30"
+                          className={`flex items-center justify-center gap-2 rounded-lg border px-3 py-8 transition-colors ${p.isSpeaking
+                            ? "border-green-500/50 bg-green-500/10"
+                            : ""
                             }`}
-                          />
+                        >
+                          {/* <div */}
+                          {/*   className={`size-2 shrink-0 rounded-full ${p.isSpeaking */}
+                          {/*       ? "bg-green-500 animate-pulse" */}
+                          {/*       : "bg-muted-foreground/30" */}
+                          {/*     }`} */}
+                          {/* /> */}
                           <span className="text-xs font-medium truncate">
                             {p.name}
                           </span>
@@ -357,6 +399,7 @@ export function RoomActivityClient({ token }: { token: string | null }) {
             <thead>
               <tr className="border-b bg-muted/50">
                 <th className="px-4 py-3 text-left font-medium">Room</th>
+                <th className="px-4 py-3 text-left font-medium">Host</th>
                 <th className="px-4 py-3 text-left font-medium">
                   Participants
                 </th>
@@ -372,6 +415,9 @@ export function RoomActivityClient({ token }: { token: string | null }) {
                 return (
                   <tr key={room.id} className="border-b last:border-0">
                     <td className="px-4 py-3 font-medium">{room.name}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {room.hostName ?? "--"}
+                    </td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {room.participants.size}
                     </td>

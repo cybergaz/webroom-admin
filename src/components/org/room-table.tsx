@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
-import { Eye, Trash2, StopCircle, History, Play, Pause, Settings } from "lucide-react";
+import { Eye, Trash2, StopCircle, History, Play, Pause, Settings, Disc } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { deleteRoom, endRoom, activateRoom, deactivateRoom } from "@/app/actions/rooms";
 import type { Room } from "@/lib/types/room";
@@ -83,6 +83,12 @@ export function RoomTable({ rooms }: { rooms: Room[]; }) {
               Sessions
             </Link>
           </Button>
+          <Button variant="ghost" size="sm" asChild>
+            <Link href={`/admin/rooms/${r.id}/recordings`}>
+              <Disc className="size-4" />
+              Recordings
+            </Link>
+          </Button>
           {r.status === "inactive" && (
             <Button
               variant="ghost"
@@ -94,28 +100,28 @@ export function RoomTable({ rooms }: { rooms: Room[]; }) {
               Activate
             </Button>
           )}
-          {r.status === "active" && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleAction(() => deactivateRoom(r.id), "Room deactivated")}
-              disabled={isPending}
-            >
-              <Pause className="size-4" />
-              Deactivate
-            </Button>
-          )}
-          {r.status === "active" && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleAction(() => endRoom(r.id), "Room ended")}
-              disabled={isPending}
-            >
-              <StopCircle className="size-4" />
-              End
-            </Button>
-          )}
+          {/* {r.status === "active" && ( */}
+          {/*   <Button */}
+          {/*     variant="ghost" */}
+          {/*     size="sm" */}
+          {/*     onClick={() => handleAction(() => deactivateRoom(r.id), "Room deactivated")} */}
+          {/*     disabled={isPending} */}
+          {/*   > */}
+          {/*     <Pause className="size-4" /> */}
+          {/*     Deactivate */}
+          {/*   </Button> */}
+          {/* )} */}
+          {/* {r.status === "active" && ( */}
+          {/*   <Button */}
+          {/*     variant="ghost" */}
+          {/*     size="sm" */}
+          {/*     onClick={() => handleAction(() => endRoom(r.id), "Room ended")} */}
+          {/*     disabled={isPending} */}
+          {/*   > */}
+          {/*     <StopCircle className="size-4" /> */}
+          {/*     End */}
+          {/*   </Button> */}
+          {/* )} */}
           <Button
             variant="destructive"
             size="sm"

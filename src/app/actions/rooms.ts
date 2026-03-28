@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { apiFetch } from "@/lib/api-client";
-import type { Room, RoomSession, RoomWithMembership, LiveRoom } from "@/lib/types/room";
+import type { Room, RoomSession, RoomWithMembership, LiveRoom, Recording } from "@/lib/types/room";
 
 export async function getRooms() {
   return apiFetch<{ rooms: Room[]; }>("/admin/rooms");
@@ -134,4 +134,8 @@ export async function assignUserToRooms(userId: string, roomIds: string[]) {
 
 export async function getRoomActivity() {
   return apiFetch<{ rooms: LiveRoom[] }>("/admin/room-activity");
+}
+
+export async function getRoomRecordings(roomId: string) {
+  return apiFetch<{ recordings: Recording[] }>(`/admin/rooms/${roomId}/recordings`);
 }

@@ -50,6 +50,14 @@ export interface RoomWithMembership {
   createdAt: Date;
 }
 
+export interface Recording {
+  filename: string;
+  url: string;
+  session_id: string;
+  start_time: string;
+  end_time: string;
+}
+
 export interface CreateRoomRequest {
   name: string;
   description?: string;
@@ -64,5 +72,7 @@ export interface LiveRoomParticipant {
 export interface LiveRoom {
   id: string;
   name: string;
+  hostId: string | null;
+  hostName: string | null;
   participants: LiveRoomParticipant[];
 }

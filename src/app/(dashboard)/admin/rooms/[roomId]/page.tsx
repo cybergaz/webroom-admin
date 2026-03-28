@@ -9,7 +9,7 @@ import type { Room, RoomMember } from "@/lib/types/room";
 export default async function RoomDetailPage({
   params,
 }: {
-  params: Promise<{ roomId: string }>;
+  params: Promise<{ roomId: string; }>;
 }) {
   const { roomId } = await params;
 
@@ -24,7 +24,7 @@ export default async function RoomDetailPage({
 
   let members: RoomMember[] = [];
   try {
-    const data = await apiFetch<{ members: RoomMember[] }>(`/rooms/${roomId}/members`);
+    const data = await apiFetch<{ members: RoomMember[]; }>(`/rooms/${roomId}/members`);
     members = data.members;
   } catch {
     // non-fatal
@@ -32,7 +32,7 @@ export default async function RoomDetailPage({
 
   return (
     <div className="space-y-6">
-      <RoomDetailPanel room={room} />
+      {/* <RoomDetailPanel room={room} /> */}
       <div className="flex items-center gap-2">
         <AssignHostModal
           roomId={roomId}
