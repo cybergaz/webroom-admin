@@ -261,6 +261,7 @@ interface PhoneInputProps {
   autoComplete?: string;
   className?: string;
   defaultCountry?: string;
+  defaultValue?: string;
 }
 
 export function PhoneInput({
@@ -270,13 +271,23 @@ export function PhoneInput({
   autoComplete,
   className,
   defaultCountry = "IN",
+  defaultValue,
 }: PhoneInputProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState(
-    () => COUNTRY_CODES.find((c) => c.iso === defaultCountry) ?? COUNTRY_CODES[0]
-  );
-  const [phone, setPhone] = useState("");
+  const [selected, setSelected] = useState(() => {
+    if (defaultValue) {
+      const match = COUNTRY_CODES.find((c) => defaultValue.startsWith(c.code));
+      if (match) return match;
+    }
+    return COUNTRY_CODES.find((c) => c.iso === defaultCountry) ?? COUNTRY_CODES[0];
+  });
+  const [phone, setPhone] = useState(() => {
+    if (defaultValue && defaultValue.startsWith(selected.code)) {
+      return defaultValue.slice(selected.code.length);
+    }
+    return "";
+  });
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {

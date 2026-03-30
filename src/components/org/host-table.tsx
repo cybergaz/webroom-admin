@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataTable, type Column } from "@/components/ui/data-table";
-import { Pencil, Power, PowerOff, Trash2, DoorOpen, Check } from "lucide-react";
+import { Pencil, Power, PowerOff, Trash2, DoorOpen, Check, Plus, Minus, Search } from "lucide-react";
 import { activateHost, deactivateHost, deleteHost, updateHost } from "@/app/actions/hosts";
 import { getRoomsForUser, assignHost, unassignHost } from "@/app/actions/rooms";
 import { HostForm } from "@/components/org/host-form";
@@ -209,37 +209,84 @@ export function HostTable({ hosts }: HostTableProps) {
         </AlertDialogContent>
       </AlertDialog>
       <Dialog open={assigningHost !== null} onOpenChange={(open) => !open && setAssigningHost(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Assign Rooms — {assigningHost?.name}</DialogTitle>
           </DialogHeader>
-          <Input
-            placeholder="Search rooms..."
-            value={roomSearch}
-            onChange={(e) => setRoomSearch(e.target.value)}
-          />
-          <div className="max-h-64 overflow-y-auto space-y-1 mt-1">
-            {rooms
-              .filter((r) => r.name.toLowerCase().includes(roomSearch.toLowerCase()))
-              .map((r) => (
-                <button
-                  key={r.id}
-                  type="button"
-                  onClick={() => toggleRoom(r.id)}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors border border-zinc-600/15 cursor-pointer ${selectedRoomIds.has(r.id)
-                    ? "bg-primary text-primary-foreground"
-                    : "hover:bg-muted"
-                    }`}
-                >
-                  {r.name}
-                  {selectedRoomIds.has(r.id) && <Check className="size-4 shrink-0" />}
-                </button>
-              ))}
-            {rooms.filter((r) => r.name.toLowerCase().includes(roomSearch.toLowerCase())).length === 0 && (
-              <p className="text-sm text-muted-foreground px-3 py-2">No rooms found.</p>
-            )}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input
+              placeholder="Search rooms..."
+              value={roomSearch}
+              onChange={(e) => setRoomSearch(e.target.value)}
+              className="pl-9"
+            />
           </div>
-          <div className="flex justify-end gap-2 mt-2">
+          <div className="grid grid-cols-2 gap-3">
+            {/* Assigned rooms */}
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2 mb-2 px-1">
+                <h3 className="text-sm font-medium">Assigned</h3>
+                <Badge variant="secondary" className="text-xs tabular-nums">
+                  {rooms.filter((r) => selectedRoomIds.has(r.id)).length}
+                </Badge>
+              </div>
+              <div className="min-h-48 max-h-72 overflow-y-auto space-y-1 rounded-lg border border-border bg-muted/30 p-2">
+                {rooms
+                  .filter((r) => selectedRoomIds.has(r.id) && r.name.toLowerCase().includes(roomSearch.toLowerCase()))
+                  .map((r) => (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => toggleRoom(r.id)}
+                      className="group w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors bg-primary/10 text-foreground hover:bg-destructive/10 hover:text-destructive border border-primary/20 hover:border-destructive/30 cursor-pointer"
+                    >
+                      <span className="flex items-center gap-2 truncate">
+                        <Check className="size-3.5 shrink-0 text-primary group-hover:hidden" />
+                        <Minus className="size-3.5 shrink-0 hidden group-hover:block" />
+                        <span className="truncate">{r.name}</span>
+                      </span>
+                      {!originalMemberIds.has(r.id) && (
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0 ml-2">new</Badge>
+                      )}
+                    </button>
+                  ))}
+                {rooms.filter((r) => selectedRoomIds.has(r.id) && r.name.toLowerCase().includes(roomSearch.toLowerCase())).length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-6">No assigned rooms</p>
+                )}
+              </div>
+            </div>
+            {/* Available rooms */}
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2 mb-2 px-1">
+                <h3 className="text-sm font-medium">Available</h3>
+                <Badge variant="secondary" className="text-xs tabular-nums">
+                  {rooms.filter((r) => !selectedRoomIds.has(r.id)).length}
+                </Badge>
+              </div>
+              <div className="min-h-48 max-h-72 overflow-y-auto space-y-1 rounded-lg border border-border bg-muted/30 p-2">
+                {rooms
+                  .filter((r) => !selectedRoomIds.has(r.id) && r.name.toLowerCase().includes(roomSearch.toLowerCase()))
+                  .map((r) => (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => toggleRoom(r.id)}
+                      className="group w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors hover:bg-primary/10 border border-transparent hover:border-primary/20 cursor-pointer"
+                    >
+                      <span className="flex items-center gap-2 truncate">
+                        <Plus className="size-3.5 shrink-0 text-muted-foreground group-hover:text-primary" />
+                        <span className="truncate">{r.name}</span>
+                      </span>
+                    </button>
+                  ))}
+                {rooms.filter((r) => !selectedRoomIds.has(r.id) && r.name.toLowerCase().includes(roomSearch.toLowerCase())).length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-6">No available rooms</p>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setAssigningHost(null)}>Cancel</Button>
             <Button
               onClick={handleAssignRooms}
@@ -248,7 +295,7 @@ export function HostTable({ hosts }: HostTableProps) {
                 Array.from(originalMemberIds).every((id) => selectedRoomIds.has(id))
               )}
             >
-              Save
+              Save Changes
             </Button>
           </div>
         </DialogContent>

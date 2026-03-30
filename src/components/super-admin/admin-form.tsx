@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,13 +20,28 @@ interface AdminFormProps {
 
 export function AdminForm({ action, defaultValues, isEdit, onClose, onSuccess }: AdminFormProps) {
   const [state, formAction, isPending] = useActionState(action, null);
+  const lastSubmitted = useRef<Record<string, string>>({});
 
   useEffect(() => {
     if (state?.success) onSuccess?.();
   }, [state?.success]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const getDefault = (field: string) =>
+    lastSubmitted.current[field] ?? (defaultValues as Record<string, string>)?.[field];
+
   return (
-    <form action={formAction} className="space-y-4">
+    <form
+      action={(formData) => {
+        lastSubmitted.current = {
+          name: formData.get("name") as string,
+          email: formData.get("email") as string,
+          phone: formData.get("phone") as string,
+          password: formData.get("password") as string,
+        };
+        formAction(formData);
+      }}
+      className="space-y-4"
+    >
       {state?.error && (
         <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
           {state.error}
@@ -38,7 +53,8 @@ export function AdminForm({ action, defaultValues, isEdit, onClose, onSuccess }:
         <Input
           id="name"
           name="name"
-          defaultValue={defaultValues?.name}
+          key={`name-${state?.error}`}
+          defaultValue={getDefault("name")}
           placeholder="Admin name"
           required
         />
@@ -47,7 +63,7 @@ export function AdminForm({ action, defaultValues, isEdit, onClose, onSuccess }:
       {!isEdit && (
         <div className="space-y-2">
           <Label htmlFor="phone-number">Phone</Label>
-          <PhoneInput name="phone" id="phone-number" autoComplete="tel" />
+          <PhoneInput key={`phone-${state?.error}`} name="phone" id="phone-number" autoComplete="tel" defaultValue={lastSubmitted.current.phone} />
           <p className="text-xs text-muted-foreground">Either phone or email is required</p>
         </div>
       )}
@@ -58,7 +74,8 @@ export function AdminForm({ action, defaultValues, isEdit, onClose, onSuccess }:
           id="email"
           name="email"
           type="email"
-          defaultValue={defaultValues?.email}
+          key={`email-${state?.error}`}
+          defaultValue={getDefault("email")}
           placeholder="Email"
         />
         {!isEdit && (
@@ -69,7 +86,7 @@ export function AdminForm({ action, defaultValues, isEdit, onClose, onSuccess }:
       {!isEdit && (
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>
-          <Input id="password" name="password" type="password" placeholder="Password" required />
+          <Input id="password" name="password" type="password" key={`password-${state?.error}`} defaultValue={lastSubmitted.current.password} placeholder="Password" required />
         </div>
       )}
 

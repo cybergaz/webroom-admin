@@ -2,7 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { API_V1, COOKIE_NAMES } from "@/lib/constants";
 import type { RefreshResponse } from "@/lib/types/auth";
 
-const PUBLIC_PATHS = ["/login", "/api/auth/login", "/api/auth/refresh"];
+const PUBLIC_PATHS = ["/login", "/api/auth/login", "/api/auth/refresh", "/api/auth/logout"];
+
+function isJwtExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.exp * 1000 <= Date.now();
+  } catch {
+    return true;
+  }
+}
 
 export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -13,8 +22,8 @@ export default async function middleware(req: NextRequest) {
 
   const accessToken = req.cookies.get(COOKIE_NAMES.accessToken)?.value;
 
-  // Access token present — nothing to do
-  if (accessToken) {
+  // Access token present and not expired — nothing to do
+  if (accessToken && !isJwtExpired(accessToken)) {
     return NextResponse.next();
   }
 
@@ -42,7 +51,12 @@ export default async function middleware(req: NextRequest) {
 
   const data = (await refreshRes.json()) as RefreshResponse;
 
-  const res = NextResponse.next();
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-refreshed-access-token", data.accessToken);
+
+  const res = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
 
   const cookieOptions = {
     httpOnly: true,
