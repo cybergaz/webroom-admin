@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { apiFetch } from "@/lib/api-client";
-import type { Room, RoomSession, RoomWithMembership, LiveRoom, Recording } from "@/lib/types/room";
+import type { Room, RoomSession, RoomWithMembership, LiveRoom, Recording, PttRecording } from "@/lib/types/room";
+import type { PaginatedResponse } from "@/lib/types/api";
 
 export async function getRooms() {
   return apiFetch<{ rooms: Room[]; }>("/admin/rooms");
@@ -138,4 +139,28 @@ export async function getRoomActivity() {
 
 export async function getRoomRecordings(roomId: string) {
   return apiFetch<{ recordings: Recording[] }>(`/admin/rooms/${roomId}/recordings`);
+}
+
+export async function getPttRecordings(params?: {
+  roomId?: string;
+  userId?: string;
+  page?: number;
+  limit?: number;
+}) {
+  return apiFetch<PaginatedResponse<PttRecording>>("/admin/ptt-recordings", {
+    params: {
+      roomId: params?.roomId,
+      userId: params?.userId,
+      page: params?.page ?? 1,
+      limit: params?.limit ?? 20,
+    },
+  });
+}
+
+export async function getPttRecordingUrl(recordingId: string) {
+  return apiFetch<{ url: string }>(`/admin/ptt-recordings/${recordingId}/url`);
+}
+
+export async function getRoomMembers(roomId: string) {
+  return apiFetch<{ members: { id: string; name: string; phone: string | null; email: string | null; role: string; addedAt: string }[] }>(`/rooms/${roomId}/members`);
 }

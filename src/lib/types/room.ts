@@ -58,6 +58,18 @@ export interface Recording {
   end_time: string;
 }
 
+export interface PttRecording {
+  id: string;
+  roomId: string;
+  roomName: string;
+  sessionId: string;
+  userId: string;
+  userName: string;
+  durationMs: number;
+  fileSizeBytes: number;
+  createdAt: string;
+}
+
 export interface CreateRoomRequest {
   name: string;
   description?: string;
