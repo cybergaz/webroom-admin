@@ -83,12 +83,13 @@ export function HostForm({ action, defaultValues, isEdit, onClose, onSuccess }: 
         )}
       </div>
 
-      {!isEdit && (
-        <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
-          <Input id="password" name="password" type="password" key={`password-${state?.error}`} defaultValue={lastSubmitted.current.password} placeholder="Password" required />
-        </div>
-      )}
+      <div className="space-y-2">
+        <Label htmlFor="password">{isEdit ? "New Password" : "Password"}</Label>
+        <Input id="password" name="password" type="password" key={`password-${state?.error}`} defaultValue={lastSubmitted.current.password} placeholder={isEdit ? "Leave blank to keep current" : "Password"} required={!isEdit} minLength={6} />
+        {isEdit && (
+          <p className="text-xs text-muted-foreground">Min 6 characters. Leave blank to keep unchanged.</p>
+        )}
+      </div>
 
       <div className="flex gap-2">
         <Button type="submit" disabled={isPending}>
