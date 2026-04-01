@@ -40,6 +40,7 @@ export function RoomTable({ rooms }: { rooms: Room[]; }) {
     {
       key: "name",
       header: "Name",
+      sortable: true,
       render: (r) => (
         <Link
           href={`/admin/rooms/${r.id}`}
@@ -61,6 +62,7 @@ export function RoomTable({ rooms }: { rooms: Room[]; }) {
     {
       key: "createdAt",
       header: "Created",
+      sortable: true,
       render: (r) => (
         <span className="text-muted-foreground">{formatDate(r.createdAt)}</span>
       ),
@@ -143,6 +145,9 @@ export function RoomTable({ rooms }: { rooms: Room[]; }) {
         columns={columns}
         data={rooms}
         showSearch={false}
+        searchPlaceholder="Search by name..."
+        searchFn={(r, q) => r.name.toLowerCase().includes(q.toLowerCase())}
+        pageSize={20}
         emptyMessage="No rooms found."
       />
       <AlertDialog open={deletingRoom !== null} onOpenChange={(open) => !open && setDeletingRoom(null)}>

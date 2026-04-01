@@ -122,6 +122,7 @@ export function UserTable({ users }: UserTableProps) {
     {
       key: "name",
       header: "Name",
+      sortable: true,
       render: (u) => <span className="font-medium">{u.name}</span>,
     },
     {
@@ -141,14 +142,10 @@ export function UserTable({ users }: UserTableProps) {
       header: "Status",
       render: (u) => statusBadge(u.status),
     },
-    // {
-    //   key: "requestId",
-    //   header: "User Code",
-    //   render: (u) => statusBadge(u.requestId),
-    // },
     {
       key: "createdAt",
       header: "Created At",
+      sortable: true,
       render: (u) => (
         <span className="text-muted-foreground">{formatDate(u.createdAt)}</span>
       ),
@@ -208,8 +205,17 @@ export function UserTable({ users }: UserTableProps) {
       <DataTable
         columns={columns}
         data={users}
-        searchPlaceholder="Search users..."
         showSearch={false}
+        searchPlaceholder="Search by name, phone, email..."
+        searchFn={(u, q) => {
+          const l = q.toLowerCase();
+          return (
+            u.name.toLowerCase().includes(l) ||
+            (u.phone?.toLowerCase().includes(l) ?? false) ||
+            (u.email?.toLowerCase().includes(l) ?? false)
+          );
+        }}
+        pageSize={20}
         emptyMessage="No users found."
       />
       <AlertDialog open={deletingUser !== null} onOpenChange={(open) => !open && setDeletingUser(null)}>

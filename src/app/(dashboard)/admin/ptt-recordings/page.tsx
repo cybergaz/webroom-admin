@@ -5,7 +5,7 @@ import { PttRecordingFilters } from "@/components/org/ptt-recording-filters";
 export default async function PttRecordingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; roomId?: string; userId?: string }>;
+  searchParams: Promise<{ page?: string; roomId?: string; userId?: string; }>;
 }) {
   const params = await searchParams;
   const page = parseInt(params.page ?? "1", 10);
@@ -32,25 +32,27 @@ export default async function PttRecordingsPage({
   }
 
   // Fetch room members for user filter when a room is selected
-  let members: { id: string; name: string }[] = [];
+  let members: { id: string; name: string; }[] = [];
   if (roomId) {
     try {
       const { members: roomMembers } = await getRoomMembers(roomId);
       members = roomMembers.map((m) => ({ id: m.id, name: m.name }));
-    } catch {}
+    } catch { }
   }
 
   const totalPages = Math.ceil(recordings.total / recordings.limit) || 1;
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">PTT Recordings</h1>
-      <PttRecordingFilters
-        rooms={rooms}
-        members={members}
-        currentRoomId={roomId}
-        currentUserId={userId}
-      />
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">PTT Recordings</h1>
+        <PttRecordingFilters
+          rooms={rooms}
+          members={members}
+          currentRoomId={roomId}
+          currentUserId={userId}
+        />
+      </div>
       <PttRecordingTable
         recordings={recordings.data}
         currentPage={page}

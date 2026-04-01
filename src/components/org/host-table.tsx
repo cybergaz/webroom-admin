@@ -103,6 +103,7 @@ export function HostTable({ hosts }: HostTableProps) {
     {
       key: "name",
       header: "Name",
+      sortable: true,
       render: (h) => <span className="font-medium">{h.name}</span>,
     },
     {
@@ -182,6 +183,16 @@ export function HostTable({ hosts }: HostTableProps) {
         columns={columns}
         data={hosts}
         showSearch={false}
+        searchPlaceholder="Search by name, phone, email..."
+        searchFn={(h, q) => {
+          const l = q.toLowerCase();
+          return (
+            h.name.toLowerCase().includes(l) ||
+            (h.phone?.toLowerCase().includes(l) ?? false) ||
+            (h.email?.toLowerCase().includes(l) ?? false)
+          );
+        }}
+        pageSize={20}
         emptyMessage="No hosts found."
       />
       <AlertDialog open={deletingHost !== null} onOpenChange={(open) => !open && setDeletingHost(null)}>

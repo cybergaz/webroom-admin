@@ -8,6 +8,7 @@ import {
   Activity,
   ShieldCheck,
   AudioLines,
+  ClipboardCheck,
   type LucideIcon,
 } from "lucide-react";
 import { ROLES, type Role } from "@/lib/constants";
@@ -49,6 +50,7 @@ const ADMIN_NAV: NavGroup[] = [
       { label: "Users", href: "/admin/users", icon: Users },
       { label: "New Users", href: "/admin/new-users", icon: UserCheck },
       { label: "Hosts", href: "/admin/hosts", icon: Mic },
+      { label: "Attendance", href: "/admin/attendance", icon: ClipboardCheck },
     ],
   },
   {

@@ -118,16 +118,19 @@ export function PttRecordingTable({
     {
       key: "userName",
       header: "User",
+      sortable: true,
       render: (r) => <span className="text-sm font-medium">{r.userName}</span>,
     },
     {
       key: "roomName",
       header: "Room",
+      sortable: true,
       render: (r) => <span className="text-sm">{r.roomName}</span>,
     },
     {
       key: "createdAt",
       header: "Date",
+      sortable: true,
       render: (r) => (
         <span className="text-muted-foreground text-sm">
           {formatDate(r.createdAt)}
@@ -169,6 +172,11 @@ export function PttRecordingTable({
       columns={columns}
       data={recordings}
       showSearch={false}
+      searchPlaceholder="Search by user or room name..."
+      searchFn={(r, q) => {
+        const l = q.toLowerCase();
+        return r.userName.toLowerCase().includes(l) || r.roomName.toLowerCase().includes(l);
+      }}
       currentPage={currentPage}
       totalPages={totalPages}
       emptyMessage="No PTT recordings found."
