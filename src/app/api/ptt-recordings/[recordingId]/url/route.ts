@@ -6,20 +6,30 @@ export async function GET(
   { params }: { params: Promise<{ recordingId: string }> }
 ) {
   const { recordingId } = await params;
-  const accessToken = req.cookies.get(COOKIE_NAMES.accessToken)?.value;
+  const accessToken =
+    req.headers.get("x-refreshed-access-token") ||
+    req.cookies.get(COOKIE_NAMES.accessToken)?.value;
 
   if (!accessToken) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const res = await fetch(
-    `${API_V1}/admin/ptt-recordings/${recordingId}/url`,
-    { headers: { Authorization: `Bearer ${accessToken}` } }
-  );
+  let res: Response;
+  try {
+    res = await fetch(
+      `${API_V1}/admin/ptt-recordings/${recordingId}/url`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+  } catch (err) {
+    console.error("[ptt-url] Backend unreachable:", err);
+    return NextResponse.json({ error: "Backend unreachable" }, { status: 502 });
+  }
 
   if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    console.error(`[ptt-url] Backend returned ${res.status}:`, body);
     return NextResponse.json(
-      { error: "Failed to get recording URL" },
+      { error: `Backend error ${res.status}`, detail: body },
       { status: res.status }
     );
   }

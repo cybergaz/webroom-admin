@@ -74,7 +74,12 @@ function DownloadButton({ recordingId }: { recordingId: string }) {
     setLoading(true);
     try {
       const url = await fetchRecordingUrl(recordingId);
-      window.open(url, "_blank");
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     } catch (e) {
       console.error("Failed to get download URL:", e);
     } finally {
