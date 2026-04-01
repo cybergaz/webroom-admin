@@ -35,6 +35,5 @@ export async function GET(
   }
 
   const data = await res.json();
-  console.log(`[ptt-url] data=${JSON.stringify(data)}`);
   return NextResponse.json(data);
 }
