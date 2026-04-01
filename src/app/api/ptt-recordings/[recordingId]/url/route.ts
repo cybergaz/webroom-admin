@@ -35,6 +35,6 @@ export async function GET(
   }
 
   const data = await res.json();
-  console.log(`[ptt-url] OK recordingId=${recordingId} hasUrl=${!!data.url}`);
+  console.log(`[ptt-url] data=${JSON.stringify(data)}`);
   return NextResponse.json(data);
 }
