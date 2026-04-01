@@ -4,7 +4,6 @@ import { useState } from "react";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
-import { getPttRecordingUrl } from "@/app/actions/rooms";
 import type { PttRecording } from "@/lib/types/room";
 import { Play, Download, Loader2 } from "lucide-react";
 
@@ -21,16 +20,22 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+async function fetchRecordingUrl(recordingId: string): Promise<string> {
+  const res = await fetch(`/api/ptt-recordings/${recordingId}/url`);
+  if (!res.ok) throw new Error("Failed to get recording URL");
+  const data = await res.json();
+  return data.url;
+}
+
 function AudioPlayer({ recordingId }: { recordingId: string }) {
   const [url, setUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handlePlay() {
-    if (url) return; // already loaded
+    if (url) return;
     setLoading(true);
     try {
-      const { url: signedUrl } = await getPttRecordingUrl(recordingId);
-      setUrl(signedUrl);
+      setUrl(await fetchRecordingUrl(recordingId));
     } catch (e) {
       console.error("Failed to get recording URL:", e);
     } finally {
@@ -40,7 +45,7 @@ function AudioPlayer({ recordingId }: { recordingId: string }) {
 
   if (url) {
     return (
-      <audio controls autoPlay preload="auto" className="h-8 max-w-56">
+      <audio controls preload="auto" className="h-8 max-w-56">
         <source src={url} type="audio/mp4" />
       </audio>
     );
@@ -68,7 +73,7 @@ function DownloadButton({ recordingId }: { recordingId: string }) {
   async function handleDownload() {
     setLoading(true);
     try {
-      const { url } = await getPttRecordingUrl(recordingId);
+      const url = await fetchRecordingUrl(recordingId);
       window.open(url, "_blank");
     } catch (e) {
       console.error("Failed to get download URL:", e);
