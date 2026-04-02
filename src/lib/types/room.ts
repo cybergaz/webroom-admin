@@ -2,7 +2,7 @@ export interface Room {
   id: string;
   name: string;
   description?: string;
-  status: "active" | "inactive" | "ended";
+  status: "active" | "inactive" | "live" | "ended";
   getstreamCallId: string;
   createdBy: string;
   hostId?: string;
@@ -87,4 +87,24 @@ export interface LiveRoom {
   hostId: string | null;
   hostName: string | null;
   participants: LiveRoomParticipant[];
+}
+
+export interface TranscriptionEntry {
+  id: string;
+  userId: string;
+  text: string;
+  startTime: string;
+  endTime: string;
+  user: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface SessionWithTranscriptions {
+  id: string;
+  roomId: string;
+  startedAt: string;
+  endedAt?: string;
+  transcriptions: TranscriptionEntry[];
 }
