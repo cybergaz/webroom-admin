@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { Pencil, Power, PowerOff, Trash2, DoorOpen, Check, Plus, Minus, Search } from "lucide-react";
 import { activateHost, deactivateHost, deleteHost, updateHost } from "@/app/actions/hosts";
+import { formatRelativeTime } from "@/lib/utils";
 import { getRoomsForUser, assignHost, unassignHost } from "@/app/actions/rooms";
 import { HostForm } from "@/components/org/host-form";
 import type { Host } from "@/lib/types/admin";
@@ -125,6 +126,23 @@ export function HostTable({ hosts }: HostTableProps) {
         <Badge variant={h.status === "approved" ? "default" : "secondary"}>
           {h.status === "approved" ? "Active" : "Inactive"}
         </Badge>
+      ),
+    },
+    {
+      key: "deviceName",
+      header: "Device",
+      render: (h) => (
+        <span className="text-muted-foreground">{h.deviceName || "—"}</span>
+      ),
+    },
+    {
+      key: "lastSeenAt",
+      header: "Last Seen",
+      sortable: true,
+      render: (h) => (
+        <span className="text-muted-foreground">
+          {formatRelativeTime(h.lastSeenAt)}
+        </span>
       ),
     },
     {

@@ -33,7 +33,7 @@ import { getRoomsForUser, assignUserToRooms, removeMember } from "@/app/actions/
 import { UserEditForm } from "@/components/org/user-edit-form";
 import type { ManagedUser } from "@/lib/types/admin";
 import type { RoomWithMembership } from "@/lib/types/room";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatRelativeTime } from "@/lib/utils";
 
 function statusBadge(status: string) {
   switch (status) {
@@ -141,6 +141,23 @@ export function UserTable({ users }: UserTableProps) {
       key: "status",
       header: "Status",
       render: (u) => statusBadge(u.status),
+    },
+    {
+      key: "deviceName",
+      header: "Device",
+      render: (u) => (
+        <span className="text-muted-foreground">{u.deviceName || "—"}</span>
+      ),
+    },
+    {
+      key: "lastSeenAt",
+      header: "Last Seen",
+      sortable: true,
+      render: (u) => (
+        <span className="text-muted-foreground">
+          {formatRelativeTime(u.lastSeenAt)}
+        </span>
+      ),
     },
     {
       key: "createdAt",

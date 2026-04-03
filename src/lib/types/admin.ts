@@ -20,6 +20,8 @@ export interface Host {
   phone: string;
   email?: string;
   status: string;
+  lastSeenAt?: string | null;
+  deviceName?: string | null;
 }
 
 export interface CreateHostRequest {
@@ -38,6 +40,8 @@ export interface ManagedUser {
   role: "user";
   status: "pending_approval" | "approved" | "rejected";
   createdAt: string;
+  lastSeenAt?: string | null;
+  deviceName?: string | null;
 }
 
 export interface CreateUserRequest {
