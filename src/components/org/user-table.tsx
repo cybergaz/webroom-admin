@@ -22,13 +22,22 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataTable, type Column } from "@/components/ui/data-table";
-import { Pencil, Power, PowerOff, Trash2, DoorOpen, Check, Plus, Minus, Search } from "lucide-react";
+import { Pencil, Power, PowerOff, Trash2, DoorOpen, Check, Plus, Minus, Search, Smartphone, Unlock, RotateCcw, Settings } from "lucide-react";
 import {
   activateUser,
   deactivateUser,
   deleteUser,
   updateUser,
+  allowDeviceChangeUser,
+  resetDeviceLockUser,
 } from "@/app/actions/users";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { getRoomsForUser, assignUserToRooms, removeMember } from "@/app/actions/rooms";
 import { UserEditForm } from "@/components/org/user-edit-form";
 import type { ManagedUser } from "@/lib/types/admin";
@@ -146,7 +155,26 @@ export function UserTable({ users }: UserTableProps) {
       key: "deviceName",
       header: "Device",
       render: (u) => (
-        <span className="text-muted-foreground">{u.deviceName || "—"}</span>
+        <div className="flex flex-col gap-0.5">
+          {/* <span className="text-muted-foreground">{u.deviceName || "—"}</span> */}
+          {u.lockedDeviceName
+            ? (
+              <div className="flex flex-col gap-0.5">
+                <span className="text-muted-foreground flex items-center gap-1">
+                  <span className="text-primary flex items-center gap-1">
+                    <Smartphone className="size-3" /> Locked
+                  </span>
+                  {u.lockedDeviceName}
+                </span>
+
+                {u.allowDeviceChange && (
+                  <Badge variant="secondary" className="text-[10px] px-1 py-0 ml-1">change allowed</Badge>
+                )}
+              </div>
+            )
+            : "—"
+          }
+        </div>
       ),
     },
     {
@@ -172,46 +200,53 @@ export function UserTable({ users }: UserTableProps) {
       header: "Actions",
       className: "w-px whitespace-nowrap",
       render: (u) => (
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" onClick={() => setEditingUser(u)}>
-            <Pencil className="size-4" />
-            Edit
-          </Button>
+        <div className="flex items-center gap-1  -ml-2.5">
           <Button variant="ghost" size="sm" onClick={() => openAssignRooms(u)}>
             <DoorOpen className="size-4" />
             Assign Rooms
           </Button>
-          {u.status === "approved" ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleAction(() => deactivateUser(u.id), `${u.name} deactivated`)}
-              disabled={isPending}
-            >
-              <PowerOff className="size-4" />
-              Deactivate
-            </Button>
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleAction(() => activateUser(u.id), `${u.name} activated`)}
-              disabled={isPending}
-            >
-              <Power className="size-4" />
-              Activate
-            </Button>
-          )}
-          <Button
-            variant="destructive"
-            size="sm"
-            className="text-destructive hover:text-destructive"
-            onClick={() => setDeletingUser(u)}
-            disabled={isPending}
-          >
-            <Trash2 className="size-4" />
-            Delete
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <Settings className="size-4" />
+                Settings
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-50">
+              <DropdownMenuItem onClick={() => setEditingUser(u)}>
+                <Pencil className="size-4" />
+                Edit
+              </DropdownMenuItem>
+              {u.status === "approved" ? (
+                <DropdownMenuItem onClick={() => handleAction(() => deactivateUser(u.id), `${u.name} deactivated`)}>
+                  <PowerOff className="size-4" />
+                  Deactivate
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem onClick={() => handleAction(() => activateUser(u.id), `${u.name} activated`)}>
+                  <Power className="size-4" />
+                  Activate
+                </DropdownMenuItem>
+              )}
+              {u.lockedDeviceId && !u.allowDeviceChange && (
+                <DropdownMenuItem onClick={() => handleAction(() => allowDeviceChangeUser(u.id), `${u.name} can now login from a new device`)}>
+                  <Unlock className="size-4" />
+                  Allow Device Change
+                </DropdownMenuItem>
+              )}
+              {u.lockedDeviceId && (
+                <DropdownMenuItem onClick={() => handleAction(() => resetDeviceLockUser(u.id), `${u.name} device lock reset`)}>
+                  <RotateCcw className="size-4" />
+                  Reset Device
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-destructive" onClick={() => setDeletingUser(u)}>
+                <Trash2 className="size-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       ),
     },

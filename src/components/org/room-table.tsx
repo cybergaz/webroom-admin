@@ -72,7 +72,7 @@ export function RoomTable({ rooms }: { rooms: Room[]; }) {
       header: "Actions",
       className: "w-px whitespace-nowrap",
       render: (r) => (
-        <div className="flex items-center justify-end gap-1">
+        <div className="flex items-center justify-end gap-1 -ml-2.5">
           <Button variant="ghost" size="sm" asChild>
             <Link href={`/admin/rooms/${r.id}`}>
               <Settings className="size-4" />

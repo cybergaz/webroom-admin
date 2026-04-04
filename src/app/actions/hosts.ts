@@ -77,3 +77,13 @@ export async function deleteHost(hostId: string) {
   await apiFetch(`/admin/hosts/${hostId}`, { method: "DELETE" });
   revalidatePath("/admin/hosts");
 }
+
+export async function allowDeviceChangeHost(hostId: string) {
+  await apiFetch(`/admin/hosts/${hostId}/allow-device-change`, { method: "POST" });
+  revalidatePath("/admin/hosts");
+}
+
+export async function resetDeviceLockHost(hostId: string) {
+  await apiFetch(`/admin/hosts/${hostId}/reset-device-lock`, { method: "POST" });
+  revalidatePath("/admin/hosts");
+}

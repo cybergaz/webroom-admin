@@ -22,8 +22,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataTable, type Column } from "@/components/ui/data-table";
-import { Pencil, Power, PowerOff, Trash2, DoorOpen, Check, Plus, Minus, Search } from "lucide-react";
-import { activateHost, deactivateHost, deleteHost, updateHost } from "@/app/actions/hosts";
+import { Pencil, Power, PowerOff, Trash2, DoorOpen, Check, Plus, Minus, Search, Smartphone, Unlock, RotateCcw, Settings } from "lucide-react";
+import { activateHost, deactivateHost, deleteHost, updateHost, allowDeviceChangeHost, resetDeviceLockHost } from "@/app/actions/hosts";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { formatRelativeTime } from "@/lib/utils";
 import { getRoomsForUser, assignHost, unassignHost } from "@/app/actions/rooms";
 import { HostForm } from "@/components/org/host-form";
@@ -132,7 +139,26 @@ export function HostTable({ hosts }: HostTableProps) {
       key: "deviceName",
       header: "Device",
       render: (h) => (
-        <span className="text-muted-foreground">{h.deviceName || "—"}</span>
+        <div className="flex flex-col gap-0.5">
+          {/* <span className="text-muted-foreground">{h.deviceName || "—"}</span> */}
+          {h.lockedDeviceName
+            ? (
+              <div className="flex flex-col gap-0.5">
+                <span className="text-muted-foreground flex items-center gap-1">
+                  <span className="text-primary flex items-center gap-1">
+                    <Smartphone className="size-3" /> Locked
+                  </span>
+                  {h.lockedDeviceName}
+                </span>
+
+                {h.allowDeviceChange && (
+                  <Badge variant="secondary" className="text-[10px] px-1 py-0 ml-0">change allowed</Badge>
+                )}
+              </div>
+            )
+            : "—"
+          }
+        </div>
       ),
     },
     {
@@ -150,46 +176,53 @@ export function HostTable({ hosts }: HostTableProps) {
       header: "Actions",
       className: "w-px whitespace-nowrap",
       render: (h) => (
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" onClick={() => setEditingHost(h)}>
-            <Pencil className="size-4" />
-            Edit
-          </Button>
+        <div className="flex items-center gap-1 -ml-2.5">
           <Button variant="ghost" size="sm" onClick={() => openAssignRooms(h)}>
             <DoorOpen className="size-4" />
             Assign Rooms
           </Button>
-          {h.status === "approved" ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleAction(() => deactivateHost(h.id), `${h.name} deactivated`)}
-              disabled={isPending}
-            >
-              <PowerOff className="size-4" />
-              Deactivate
-            </Button>
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleAction(() => activateHost(h.id), `${h.name} activated`)}
-              disabled={isPending}
-            >
-              <Power className="size-4" />
-              Activate
-            </Button>
-          )}
-          <Button
-            variant="destructive"
-            size="sm"
-            className="text-destructive hover:text-destructive"
-            onClick={() => setDeletingHost(h)}
-            disabled={isPending}
-          >
-            <Trash2 className="size-4" />
-            Delete
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <Settings className="size-4" />
+                Settings
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-50">
+              <DropdownMenuItem onClick={() => setEditingHost(h)}>
+                <Pencil className="size-4" />
+                Edit
+              </DropdownMenuItem>
+              {h.status === "approved" ? (
+                <DropdownMenuItem onClick={() => handleAction(() => deactivateHost(h.id), `${h.name} deactivated`)}>
+                  <PowerOff className="size-4" />
+                  Deactivate
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem onClick={() => handleAction(() => activateHost(h.id), `${h.name} activated`)}>
+                  <Power className="size-4" />
+                  Activate
+                </DropdownMenuItem>
+              )}
+              {h.lockedDeviceId && !h.allowDeviceChange && (
+                <DropdownMenuItem onClick={() => handleAction(() => allowDeviceChangeHost(h.id), `${h.name} can now login from a new device`)}>
+                  <Unlock className="size-4" />
+                  Allow Device Change
+                </DropdownMenuItem>
+              )}
+              {h.lockedDeviceId && (
+                <DropdownMenuItem onClick={() => handleAction(() => resetDeviceLockHost(h.id), `${h.name} device lock reset`)}>
+                  <RotateCcw className="size-4" />
+                  Reset Device
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-destructive" onClick={() => setDeletingHost(h)}>
+                <Trash2 className="size-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       ),
     },

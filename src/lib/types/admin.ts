@@ -22,6 +22,9 @@ export interface Host {
   status: string;
   lastSeenAt?: string | null;
   deviceName?: string | null;
+  lockedDeviceId?: string | null;
+  lockedDeviceName?: string | null;
+  allowDeviceChange?: boolean;
 }
 
 export interface CreateHostRequest {
@@ -42,6 +45,9 @@ export interface ManagedUser {
   createdAt: string;
   lastSeenAt?: string | null;
   deviceName?: string | null;
+  lockedDeviceId?: string | null;
+  lockedDeviceName?: string | null;
+  allowDeviceChange?: boolean;
 }
 
 export interface CreateUserRequest {

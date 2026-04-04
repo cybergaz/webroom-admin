@@ -125,3 +125,13 @@ export async function forceLogoutUser(userId: string) {
   await apiFetch(`/admin/users/${userId}/force-logout`, { method: "POST" });
   revalidatePath("/admin/users");
 }
+
+export async function allowDeviceChangeUser(userId: string) {
+  await apiFetch(`/admin/users/${userId}/allow-device-change`, { method: "POST" });
+  revalidatePath("/admin/users");
+}
+
+export async function resetDeviceLockUser(userId: string) {
+  await apiFetch(`/admin/users/${userId}/reset-device-lock`, { method: "POST" });
+  revalidatePath("/admin/users");
+}
