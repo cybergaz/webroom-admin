@@ -162,6 +162,13 @@ export function HostTable({ hosts }: HostTableProps) {
       ),
     },
     {
+      key: "appVersion",
+      header: "App Version",
+      render: (h) => (
+        <span className="text-muted-foreground">{h.appVersion || "—"}</span>
+      ),
+    },
+    {
       key: "lastSeenAt",
       header: "Last Seen",
       sortable: true,

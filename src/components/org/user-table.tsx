@@ -178,6 +178,13 @@ export function UserTable({ users }: UserTableProps) {
       ),
     },
     {
+      key: "appVersion",
+      header: "App Version",
+      render: (u) => (
+        <span className="text-muted-foreground">{u.appVersion || "—"}</span>
+      ),
+    },
+    {
       key: "lastSeenAt",
       header: "Last Seen",
       sortable: true,

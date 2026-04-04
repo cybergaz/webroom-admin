@@ -25,6 +25,7 @@ export interface Host {
   lockedDeviceId?: string | null;
   lockedDeviceName?: string | null;
   allowDeviceChange?: boolean;
+  appVersion?: string | null;
 }
 
 export interface CreateHostRequest {
@@ -48,6 +49,7 @@ export interface ManagedUser {
   lockedDeviceId?: string | null;
   lockedDeviceName?: string | null;
   allowDeviceChange?: boolean;
+  appVersion?: string | null;
 }
 
 export interface CreateUserRequest {
