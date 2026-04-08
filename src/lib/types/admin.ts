@@ -50,6 +50,7 @@ export interface ManagedUser {
   lockedDeviceName?: string | null;
   allowDeviceChange?: boolean;
   appVersion?: string | null;
+  assignedRoomCount: number;
 }
 
 export interface CreateUserRequest {

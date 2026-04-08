@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataTable, type Column } from "@/components/ui/data-table";
-import { Pencil, Power, PowerOff, Trash2, DoorOpen, Check, Plus, Minus, Search, Smartphone, Unlock, RotateCcw, Settings } from "lucide-react";
+import { Pencil, Power, PowerOff, Trash2, DoorOpen, Check, Plus, Minus, Search, Smartphone, Unlock, RotateCcw, Settings, Circle } from "lucide-react";
 import {
   activateUser,
   deactivateUser,
@@ -42,7 +42,7 @@ import { getRoomsForUser, assignUserToRooms, removeMember } from "@/app/actions/
 import { UserEditForm } from "@/components/org/user-edit-form";
 import type { ManagedUser } from "@/lib/types/admin";
 import type { RoomWithMembership } from "@/lib/types/room";
-import { formatDate, formatRelativeTime } from "@/lib/utils";
+import { cn, formatDate, formatRelativeTime } from "@/lib/utils";
 
 function statusBadge(status: string) {
   switch (status) {
@@ -132,7 +132,11 @@ export function UserTable({ users }: UserTableProps) {
       key: "name",
       header: "Name",
       sortable: true,
-      render: (u) => <span className="font-medium">{u.name}</span>,
+      render: (u) => (
+        <span className="relative inline-flex items-center font-medium">
+          {u.name}
+        </span>
+      ),
     },
     {
       key: "phone",
@@ -208,9 +212,9 @@ export function UserTable({ users }: UserTableProps) {
       className: "w-px whitespace-nowrap",
       render: (u) => (
         <div className="flex items-center gap-1  -ml-2.5">
-          <Button variant="ghost" size="sm" onClick={() => openAssignRooms(u)}>
-            <DoorOpen className="size-4" />
-            Assign Rooms
+          <Button variant="ghost" size="sm" onClick={() => openAssignRooms(u)} className={cn("bg-zinc-600/5 hover:bg-zinc-600/10", u.assignedRoomCount > 0 && "bg-green-500/10 hover:bg-green-600/20")}>
+            <DoorOpen className={cn("size-4", u.assignedRoomCount > 0 && "text-green-700")} />
+            {u.assignedRoomCount > 0 ? "Configure" : "Assign"} Rooms
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
