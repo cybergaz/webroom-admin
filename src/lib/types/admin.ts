@@ -26,6 +26,7 @@ export interface Host {
   lockedDeviceName?: string | null;
   allowDeviceChange?: boolean;
   appVersion?: string | null;
+  assignedRoomCount: number;
 }
 
 export interface CreateHostRequest {

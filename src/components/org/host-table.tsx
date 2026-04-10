@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { Pencil, Power, PowerOff, Trash2, DoorOpen, Check, Plus, Minus, Search, Smartphone, Unlock, RotateCcw, Settings } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { activateHost, deactivateHost, deleteHost, updateHost, allowDeviceChangeHost, resetDeviceLockHost } from "@/app/actions/hosts";
 import {
   DropdownMenu,
@@ -184,9 +185,9 @@ export function HostTable({ hosts }: HostTableProps) {
       className: "w-px whitespace-nowrap",
       render: (h) => (
         <div className="flex items-center gap-1 -ml-2.5">
-          <Button variant="ghost" size="sm" onClick={() => openAssignRooms(h)}>
-            <DoorOpen className="size-4" />
-            Assign Rooms
+          <Button variant="ghost" size="sm" onClick={() => openAssignRooms(h)} className={cn("bg-zinc-600/5 hover:bg-zinc-600/10", h.assignedRoomCount > 0 && "bg-green-500/10 hover:bg-green-600/20")}>
+            <DoorOpen className={cn("size-4", h.assignedRoomCount > 0 && "text-green-700")} />
+            {h.assignedRoomCount > 0 ? "Configure" : "Assign"} Rooms
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
