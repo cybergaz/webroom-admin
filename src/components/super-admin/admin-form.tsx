@@ -83,12 +83,18 @@ export function AdminForm({ action, defaultValues, isEdit, onClose, onSuccess }:
         )}
       </div>
 
-      {!isEdit && (
-        <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
-          <Input id="password" name="password" type="password" key={`password-${state?.error}`} defaultValue={lastSubmitted.current.password} placeholder="Password" required />
-        </div>
-      )}
+      <div className="space-y-2">
+        <Label htmlFor="password">Password{isEdit && <span className="text-muted-foreground font-normal"> (leave blank to keep current)</span>}</Label>
+        <Input
+          id="password"
+          name="password"
+          type="password"
+          key={`password-${state?.error}`}
+          defaultValue={lastSubmitted.current.password}
+          placeholder={isEdit ? "New password" : "Password"}
+          required={!isEdit}
+        />
+      </div>
 
       <div className="flex gap-3 mt-5">
         <Button type="submit" disabled={isPending}>

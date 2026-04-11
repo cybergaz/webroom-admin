@@ -13,6 +13,9 @@ type LoginMethod = "phone" | "email";
 export function LoginForm() {
   const [state, formAction, isPending] = useActionState(login, null);
   const [method, setMethod] = useState<LoginMethod>("phone");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   return (
     <form action={formAction} className="space-y-4">
@@ -56,6 +59,8 @@ export function LoginForm() {
             id="phone-number"
             required
             autoComplete="tel-national"
+            value={phone}
+            onChange={setPhone}
           />
         </div>
       ) : (
@@ -68,6 +73,8 @@ export function LoginForm() {
             placeholder="Enter your email"
             required
             autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
         </div>
       )}
@@ -81,6 +88,8 @@ export function LoginForm() {
           placeholder="Enter your password"
           required
           autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
         />
       </div>
 

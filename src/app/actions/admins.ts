@@ -46,11 +46,12 @@ export async function updateAdmin(
 ) {
   const name = (formData.get("name") as string) || undefined;
   const email = (formData.get("email") as string) || undefined;
+  const password = (formData.get("password") as string) || undefined;
 
   try {
     await apiFetch(`/super-admin/admins/${adminId}`, {
       method: "PATCH",
-      body: { name, email },
+      body: { name, email, password },
     });
   } catch (e) {
     return { error: (e as Error).message };

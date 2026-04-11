@@ -262,6 +262,9 @@ interface PhoneInputProps {
   className?: string;
   defaultCountry?: string;
   defaultValue?: string;
+  // Controlled mode
+  value?: string;
+  onChange?: (value: string) => void;
 }
 
 export function PhoneInput({
@@ -272,22 +275,49 @@ export function PhoneInput({
   className,
   defaultCountry = "IN",
   defaultValue,
+  value: controlledValue,
+  onChange: onControlledChange,
 }: PhoneInputProps) {
+  const isControlled = controlledValue !== undefined;
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(() => {
-    if (defaultValue) {
-      const match = COUNTRY_CODES.find((c) => defaultValue.startsWith(c.code));
+    const initial = defaultValue ?? controlledValue;
+    if (initial) {
+      const match = COUNTRY_CODES.find((c) => initial.startsWith(c.code));
       if (match) return match;
     }
     return COUNTRY_CODES.find((c) => c.iso === defaultCountry) ?? COUNTRY_CODES[0];
   });
-  const [phone, setPhone] = useState(() => {
+  const [internalPhone, setInternalPhone] = useState(() => {
     if (defaultValue && defaultValue.startsWith(selected.code)) {
       return defaultValue.slice(selected.code.length);
     }
     return "";
   });
+
+  // In controlled mode derive the bare number from the external value
+  const phone = isControlled
+    ? controlledValue.startsWith(selected.code)
+      ? controlledValue.slice(selected.code.length)
+      : controlledValue
+    : internalPhone;
+
+  const setPhone = (val: string) => {
+    if (isControlled) {
+      onControlledChange?.(`${selected.code}${val}`);
+    } else {
+      setInternalPhone(val);
+    }
+  };
+
+  const handleSelectCountry = (c: typeof selected) => {
+    setSelected(c);
+    setOpen(false);
+    if (isControlled) {
+      onControlledChange?.(`${c.code}${phone}`);
+    }
+  };
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -344,10 +374,7 @@ export function PhoneInput({
                     <button
                       key={c.iso}
                       type="button"
-                      onClick={() => {
-                        setSelected(c);
-                        setOpen(false);
-                      }}
+                      onClick={() => handleSelectCountry(c)}
                       className={cn(
                         "flex w-full items-center gap-2.5 px-3 py-1.5 text-sm transition-colors hover:bg-accent",
                         selected.iso === c.iso && "bg-accent"
