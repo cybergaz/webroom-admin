@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataTable, type Column } from "@/components/ui/data-table";
-import { Pencil, Power, PowerOff, Trash2, DoorOpen, Check, Plus, Minus, Search, Smartphone, Unlock, RotateCcw, Settings } from "lucide-react";
+import { Pencil, Power, PowerOff, Trash2, DoorOpen, Check, Plus, Minus, Search, Smartphone, Unlock, RotateCcw, Settings, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { activateHost, deactivateHost, deleteHost, updateHost, allowDeviceChangeHost, resetDeviceLockHost } from "@/app/actions/hosts";
 import {
@@ -44,6 +44,7 @@ interface HostTableProps {
 
 export function HostTable({ hosts }: HostTableProps) {
   const [isPending, startTransition] = useTransition();
+  const [localHosts, setLocalHosts] = useState(hosts);
   const [editingHost, setEditingHost] = useState<Host | null>(null);
   const [deletingHost, setDeletingHost] = useState<Host | null>(null);
   const [assigningHost, setAssigningHost] = useState<Host | null>(null);
@@ -90,6 +91,11 @@ export function HostTable({ hosts }: HostTableProps) {
         if (toAdd.length > 0) parts.push(`added to ${toAdd.length} room(s)`);
         if (toRemove.length > 0) parts.push(`removed from ${toRemove.length} room(s)`);
         toast.success(`${assigningHost.name} ${parts.join(", ")}`);
+        setLocalHosts((prev) =>
+          prev.map((h) =>
+            h.id === assigningHost.id ? { ...h, assignedRoomCount: selectedRoomIds.size } : h
+          )
+        );
         setAssigningHost(null);
       } catch (e) {
         toast.error((e as Error).message);
@@ -147,9 +153,9 @@ export function HostTable({ hosts }: HostTableProps) {
               <div className="flex flex-col gap-0.5">
                 <span className="text-muted-foreground flex items-center gap-1">
                   <span className="text-primary flex items-center gap-1">
-                    <Smartphone className="size-3" /> Locked
+                    <Lock className="size-3" /> Locked
                   </span>
-                  {h.lockedDeviceName}
+                  {/* {h.lockedDeviceName} */}
                 </span>
 
                 {h.allowDeviceChange && (
@@ -240,7 +246,7 @@ export function HostTable({ hosts }: HostTableProps) {
     <>
       <DataTable
         columns={columns}
-        data={hosts}
+        data={localHosts}
         showSearch={false}
         searchPlaceholder="Search by name, phone, email..."
         searchFn={(h, q) => {

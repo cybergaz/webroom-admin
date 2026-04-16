@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataTable, type Column } from "@/components/ui/data-table";
-import { Pencil, Power, PowerOff, Trash2, DoorOpen, Check, Plus, Minus, Search, Smartphone, Unlock, RotateCcw, Settings, Circle } from "lucide-react";
+import { Pencil, Power, PowerOff, Trash2, DoorOpen, Check, Plus, Minus, Search, Smartphone, Unlock, RotateCcw, Settings, Circle, Lock } from "lucide-react";
 import {
   activateUser,
   deactivateUser,
@@ -63,6 +63,7 @@ interface UserTableProps {
 
 export function UserTable({ users }: UserTableProps) {
   const [isPending, startTransition] = useTransition();
+  const [localUsers, setLocalUsers] = useState(users);
   const [editingUser, setEditingUser] = useState<ManagedUser | null>(null);
   const [deletingUser, setDeletingUser] = useState<ManagedUser | null>(null);
   const [assigningUser, setAssigningUser] = useState<ManagedUser | null>(null);
@@ -109,6 +110,11 @@ export function UserTable({ users }: UserTableProps) {
         if (toAdd.length > 0) parts.push(`added to ${toAdd.length} room(s)`);
         if (toRemove.length > 0) parts.push(`removed from ${toRemove.length} room(s)`);
         toast.success(`${assigningUser.name} ${parts.join(", ")}`);
+        setLocalUsers((prev) =>
+          prev.map((u) =>
+            u.id === assigningUser.id ? { ...u, assignedRoomCount: selectedRoomIds.size } : u
+          )
+        );
         setAssigningUser(null);
       } catch (e) {
         toast.error((e as Error).message);
@@ -166,9 +172,9 @@ export function UserTable({ users }: UserTableProps) {
               <div className="flex flex-col gap-0.5">
                 <span className="text-muted-foreground flex items-center gap-1">
                   <span className="text-primary flex items-center gap-1">
-                    <Smartphone className="size-3" /> Locked
+                    <Lock className="size-3" /> Locked
                   </span>
-                  {u.lockedDeviceName}
+                  {/* {u.lockedDeviceName} */}
                 </span>
 
                 {u.allowDeviceChange && (
@@ -267,7 +273,7 @@ export function UserTable({ users }: UserTableProps) {
     <>
       <DataTable
         columns={columns}
-        data={users}
+        data={localUsers}
         showSearch={false}
         searchPlaceholder="Search by name, phone, email..."
         searchFn={(u, q) => {
