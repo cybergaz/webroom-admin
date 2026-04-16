@@ -130,11 +130,16 @@ export function UserTable({ users }: UserTableProps) {
     });
   }
 
-  function handleAction(action: () => Promise<void>, successMsg: string) {
+  function handleAction(action: () => Promise<void>, successMsg: string, userId?: string, patch?: Partial<ManagedUser>) {
     startTransition(async () => {
       try {
         await action();
         toast.success(successMsg);
+        if (userId && patch) {
+          setLocalUsers((prev) =>
+            prev.map((u) => (u.id === userId ? { ...u, ...patch } : u))
+          );
+        }
       } catch (e) {
         toast.error((e as Error).message);
       }
@@ -254,13 +259,13 @@ export function UserTable({ users }: UserTableProps) {
                 </DropdownMenuItem>
               )}
               {u.lockedDeviceId && !u.allowDeviceChange && (
-                <DropdownMenuItem onClick={() => handleAction(() => allowDeviceChangeUser(u.id), `${u.name} can now login from a new device`)}>
+                <DropdownMenuItem onClick={() => handleAction(() => allowDeviceChangeUser(u.id), `${u.name} can now login from a new device`, u.id, { allowDeviceChange: true })}>
                   <Unlock className="size-4" />
                   Allow Device Change
                 </DropdownMenuItem>
               )}
               {u.lockedDeviceId && (
-                <DropdownMenuItem onClick={() => handleAction(() => resetDeviceLockUser(u.id), `${u.name} device lock reset`)}>
+                <DropdownMenuItem onClick={() => handleAction(() => resetDeviceLockUser(u.id), `${u.name} device lock reset`, u.id, { lockedDeviceId: null, lockedDeviceName: null, allowDeviceChange: false })}>
                   <RotateCcw className="size-4" />
                   Reset Device
                 </DropdownMenuItem>

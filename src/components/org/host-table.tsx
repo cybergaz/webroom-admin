@@ -111,11 +111,16 @@ export function HostTable({ hosts }: HostTableProps) {
     });
   }
 
-  function handleAction(action: () => Promise<void>, msg: string) {
+  function handleAction(action: () => Promise<void>, msg: string, hostId?: string, patch?: Partial<Host>) {
     startTransition(async () => {
       try {
         await action();
         toast.success(msg);
+        if (hostId && patch) {
+          setLocalHosts((prev) =>
+            prev.map((h) => (h.id === hostId ? { ...h, ...patch } : h))
+          );
+        }
       } catch (e) {
         toast.error((e as Error).message);
       }
@@ -227,13 +232,13 @@ export function HostTable({ hosts }: HostTableProps) {
                 </DropdownMenuItem>
               )}
               {h.lockedDeviceId && !h.allowDeviceChange && (
-                <DropdownMenuItem onClick={() => handleAction(() => allowDeviceChangeHost(h.id), `${h.name} can now login from a new device`)}>
+                <DropdownMenuItem onClick={() => handleAction(() => allowDeviceChangeHost(h.id), `${h.name} can now login from a new device`, h.id, { allowDeviceChange: true })}>
                   <Unlock className="size-4" />
                   Allow Device Change
                 </DropdownMenuItem>
               )}
               {h.lockedDeviceId && (
-                <DropdownMenuItem onClick={() => handleAction(() => resetDeviceLockHost(h.id), `${h.name} device lock reset`)}>
+                <DropdownMenuItem onClick={() => handleAction(() => resetDeviceLockHost(h.id), `${h.name} device lock reset`, h.id, { lockedDeviceId: null, lockedDeviceName: null, allowDeviceChange: false })}>
                   <RotateCcw className="size-4" />
                   Reset Device
                 </DropdownMenuItem>
