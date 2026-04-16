@@ -53,6 +53,14 @@ export function HostTable({ hosts }: HostTableProps) {
   const [selectedRoomIds, setSelectedRoomIds] = useState<Set<string>>(new Set());
   const [originalMemberIds, setOriginalMemberIds] = useState<Set<string>>(new Set());
 
+  function closeAssignRooms() {
+    setAssigningHost(null);
+    setRooms([]);
+    setSelectedRoomIds(new Set());
+    setOriginalMemberIds(new Set());
+    setRoomSearch("");
+  }
+
   function openAssignRooms(host: Host) {
     setAssigningHost(host);
     setRoomSearch("");
@@ -78,7 +86,7 @@ export function HostTable({ hosts }: HostTableProps) {
     const toAdd = Array.from(selectedRoomIds).filter((id) => !originalMemberIds.has(id));
     const toRemove = Array.from(originalMemberIds).filter((id) => !selectedRoomIds.has(id));
     if (toAdd.length === 0 && toRemove.length === 0) {
-      setAssigningHost(null);
+      closeAssignRooms();
       return;
     }
     startTransition(async () => {
@@ -96,7 +104,7 @@ export function HostTable({ hosts }: HostTableProps) {
             h.id === assigningHost.id ? { ...h, assignedRoomCount: selectedRoomIds.size } : h
           )
         );
-        setAssigningHost(null);
+        closeAssignRooms();
       } catch (e) {
         toast.error((e as Error).message);
       }
@@ -284,7 +292,7 @@ export function HostTable({ hosts }: HostTableProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <Dialog open={assigningHost !== null} onOpenChange={(open) => !open && setAssigningHost(null)}>
+      <Dialog open={assigningHost !== null} onOpenChange={(open) => !open && closeAssignRooms()}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Assign Rooms — {assigningHost?.name}</DialogTitle>
@@ -363,7 +371,7 @@ export function HostTable({ hosts }: HostTableProps) {
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setAssigningHost(null)}>Cancel</Button>
+            <Button variant="outline" onClick={closeAssignRooms}>Cancel</Button>
             <Button
               onClick={handleAssignRooms}
               disabled={isPending || (
