@@ -32,6 +32,7 @@ export async function POST() {
       id: data.user.userId,
       role: data.user.role,
       name: data.user.name,
+      license: data.user.license ?? null,
     }
   );
 

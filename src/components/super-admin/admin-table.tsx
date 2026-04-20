@@ -21,15 +21,17 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
-import { Pencil, Power, PowerOff, Trash2 } from "lucide-react";
+import { KeyRound, Pencil, Power, PowerOff, Trash2 } from "lucide-react";
 import { activateAdmin, deactivateAdmin, deleteAdmin, updateAdmin } from "@/app/actions/admins";
 import { AdminForm } from "@/components/super-admin/admin-form";
+import { LicenseDialog } from "@/components/super-admin/license-dialog";
 import type { Admin } from "@/lib/types/admin";
 
 export function AdminTable({ admins }: { admins: Admin[]; }) {
   const [isPending, startTransition] = useTransition();
   const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null);
   const [deletingAdmin, setDeletingAdmin] = useState<Admin | null>(null);
+  const [licensingAdmin, setLicensingAdmin] = useState<Admin | null>(null);
 
   function handleAction(action: () => Promise<void>, msg: string) {
     startTransition(async () => {
@@ -70,11 +72,38 @@ export function AdminTable({ admins }: { admins: Admin[]; }) {
       ),
     },
     {
+      key: "plan",
+      header: "Plan",
+      render: (a) => {
+        if (!a.license) return <span className="text-muted-foreground">—</span>;
+        if (a.license.status === "expired") {
+          return <Badge variant="destructive">Expired</Badge>;
+        }
+        const exp = new Date(a.license.expiresAt ?? "").toLocaleDateString();
+        const warn = (a.license.daysRemaining ?? 0) <= 7;
+        return (
+          <span
+            className={
+              "text-sm " +
+              (warn ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")
+            }
+            title={`${a.license.daysRemaining} days left`}
+          >
+            Expires {exp}
+          </span>
+        );
+      },
+    },
+    {
       key: "actions",
       header: "Actions",
       className: "w-px whitespace-nowrap",
       render: (a) => (
         <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" onClick={() => setLicensingAdmin(a)}>
+            <KeyRound className="size-4" />
+            License
+          </Button>
           <Button variant="ghost" size="sm" onClick={() => setEditingAdmin(a)}>
             <Pencil className="size-4" />
             Edit
@@ -147,6 +176,10 @@ export function AdminTable({ admins }: { admins: Admin[]; }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <LicenseDialog
+        admin={licensingAdmin}
+        onClose={() => setLicensingAdmin(null)}
+      />
       <Dialog open={editingAdmin !== null} onOpenChange={(open) => !open && setEditingAdmin(null)}>
         <DialogContent>
           <DialogHeader>

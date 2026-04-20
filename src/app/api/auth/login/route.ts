@@ -25,6 +25,7 @@ export async function POST(request: Request) {
     id: user.userId,
     role: user.role,
     name: user.name,
+    license: user.license ?? null,
   });
 
   return NextResponse.json({ user });

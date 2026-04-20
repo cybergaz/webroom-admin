@@ -1,3 +1,5 @@
+import type { LicenseInfo } from "@/lib/types/auth";
+
 export interface Admin {
   id: string;
   name: string;
@@ -5,6 +7,7 @@ export interface Admin {
   email?: string;
   status: string;
   createdAt: string;
+  license?: Omit<LicenseInfo, "status"> & { status: "active" | "expired" } | null;
 }
 
 export interface CreateAdminRequest {

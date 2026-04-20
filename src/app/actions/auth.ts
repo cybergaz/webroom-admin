@@ -43,6 +43,7 @@ export async function login(
     id: user.userId,
     role: user.role,
     name: user.name,
+    license: user.license ?? null,
   });
 
   const dest = ROLE_DASHBOARD_ROUTES[user.role];

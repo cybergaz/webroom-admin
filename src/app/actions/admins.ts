@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { apiFetch } from "@/lib/api-client";
 import type { Admin } from "@/lib/types/admin";
+import type { PlanDuration } from "@/lib/types/auth";
 
 // ─── Admin CRUD (super_admin only) ──────────────────────────────────────────
 
@@ -77,5 +78,30 @@ export async function deactivateAdmin(adminId: string) {
 
 export async function deleteAdmin(adminId: string) {
   await apiFetch(`/super-admin/admins/${adminId}`, { method: "DELETE" });
+  revalidatePath("/super-admin/admins");
+}
+
+// ─── License actions ────────────────────────────────────────────────────────
+
+export async function assignAdminLicense(adminId: string, planDuration: PlanDuration) {
+  await apiFetch(`/super-admin/admins/${adminId}/license`, {
+    method: "POST",
+    body: { planDuration },
+  });
+  revalidatePath("/super-admin/admins");
+}
+
+export async function extendAdminLicense(adminId: string, planDuration: PlanDuration) {
+  await apiFetch(`/super-admin/admins/${adminId}/license/extend`, {
+    method: "POST",
+    body: { planDuration },
+  });
+  revalidatePath("/super-admin/admins");
+}
+
+export async function revokeAdminLicense(adminId: string) {
+  await apiFetch(`/super-admin/admins/${adminId}/license/revoke`, {
+    method: "POST",
+  });
   revalidatePath("/super-admin/admins");
 }
