@@ -36,6 +36,7 @@ const SUPER_ADMIN_NAV: NavGroup[] = [
     label: "People",
     items: [
       { label: "Admins", href: "/super-admin/admins", icon: ShieldCheck },
+      { label: "Users", href: "/super-admin/users", icon: Users },
     ],
   },
 ];

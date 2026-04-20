@@ -63,3 +63,23 @@ export interface CreateUserRequest {
   email?: string;
   password: string;
 }
+
+export interface UserHolder {
+  adminId: string;
+  adminName: string;
+  adoptedAt: string;
+}
+
+export interface SuperAdminManagedUser {
+  id: string;
+  requestId: string;
+  name: string;
+  phone: string;
+  email?: string;
+  role: "user" | "host";
+  status: "pending_approval" | "approved" | "rejected";
+  createdAt: string;
+  lastSeenAt?: string | null;
+  appVersion?: string | null;
+  holders: UserHolder[];
+}

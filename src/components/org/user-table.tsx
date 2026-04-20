@@ -22,11 +22,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataTable, type Column } from "@/components/ui/data-table";
-import { Pencil, Power, PowerOff, Trash2, DoorOpen, Check, Plus, Minus, Search, Smartphone, Unlock, RotateCcw, Settings, Circle, Lock } from "lucide-react";
+import { Pencil, Power, PowerOff, UserMinus, DoorOpen, Check, Plus, Minus, Search, Smartphone, Unlock, RotateCcw, Settings, Circle, Lock } from "lucide-react";
 import {
   activateUser,
   deactivateUser,
-  deleteUser,
+  deonboardUser,
   updateUser,
   allowDeviceChangeUser,
   resetDeviceLockUser,
@@ -65,7 +65,7 @@ export function UserTable({ users }: UserTableProps) {
   const [isPending, startTransition] = useTransition();
   const [localUsers, setLocalUsers] = useState(users);
   const [editingUser, setEditingUser] = useState<ManagedUser | null>(null);
-  const [deletingUser, setDeletingUser] = useState<ManagedUser | null>(null);
+  const [deonboardingUser, setDeonboardingUser] = useState<ManagedUser | null>(null);
   const [assigningUser, setAssigningUser] = useState<ManagedUser | null>(null);
   const [rooms, setRooms] = useState<RoomWithMembership[]>([]);
   const [roomSearch, setRoomSearch] = useState("");
@@ -271,9 +271,9 @@ export function UserTable({ users }: UserTableProps) {
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive" onClick={() => setDeletingUser(u)}>
-                <Trash2 className="size-4" />
-                Delete
+              <DropdownMenuItem className="text-destructive" onClick={() => setDeonboardingUser(u)}>
+                <UserMinus className="size-4" />
+                De-onboard
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -300,12 +300,14 @@ export function UserTable({ users }: UserTableProps) {
         pageSize={20}
         emptyMessage="No users found."
       />
-      <AlertDialog open={deletingUser !== null} onOpenChange={(open) => !open && setDeletingUser(null)}>
+      <AlertDialog open={deonboardingUser !== null} onOpenChange={(open) => !open && setDeonboardingUser(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {deletingUser?.name}?</AlertDialogTitle>
+            <AlertDialogTitle>De-onboard {deonboardingUser?.name}?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone.
+              Removes this user from your scope and revokes every room you allocated to them
+              (they will lose access immediately). The user account itself is not deleted —
+              other admins who adopted this user are unaffected.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -313,13 +315,22 @@ export function UserTable({ users }: UserTableProps) {
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => {
-                if (deletingUser) {
-                  handleAction(() => deleteUser(deletingUser.id), `${deletingUser.name} deleted`);
-                  setDeletingUser(null);
+                if (deonboardingUser) {
+                  const target = deonboardingUser;
+                  startTransition(async () => {
+                    try {
+                      await deonboardUser(target.id);
+                      toast.success(`${target.name} de-onboarded`);
+                      setLocalUsers((prev) => prev.filter((u) => u.id !== target.id));
+                    } catch (e) {
+                      toast.error((e as Error).message);
+                    }
+                  });
+                  setDeonboardingUser(null);
                 }
               }}
             >
-              Delete
+              De-onboard
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

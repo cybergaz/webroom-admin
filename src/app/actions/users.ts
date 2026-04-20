@@ -2,10 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { apiFetch } from "@/lib/api-client";
-import type { ManagedUser } from "@/lib/types/admin";
+import type { ManagedUser, SuperAdminManagedUser } from "@/lib/types/admin";
 
 export async function getUsers() {
   return apiFetch<{ users: ManagedUser[]; }>("/admin/users");
+}
+
+export async function getAllUsersForSuperAdmin() {
+  return apiFetch<{ users: SuperAdminManagedUser[]; }>("/super-admin/users");
 }
 
 export type SearchUserCode = "PENDING_APPROVAL" | "AVAILABLE_FOR_ADOPTION" | "ALREADY_ADOPTED";
@@ -116,9 +120,14 @@ export async function deactivateUser(userId: string) {
   revalidatePath("/admin/users");
 }
 
-export async function deleteUser(userId: string) {
-  await apiFetch(`/admin/users/${userId}`, { method: "DELETE" });
+export async function deonboardUser(userId: string) {
+  await apiFetch(`/admin/users/${userId}/deonboard`, { method: "POST" });
   revalidatePath("/admin/users");
+}
+
+export async function hardDeleteUser(userId: string) {
+  await apiFetch(`/super-admin/users/${userId}`, { method: "DELETE" });
+  revalidatePath("/super-admin/users");
 }
 
 export async function forceLogoutUser(userId: string) {
