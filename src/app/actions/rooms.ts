@@ -118,6 +118,44 @@ export async function unassignHost(roomId: string) {
   revalidatePath("/admin/rooms");
 }
 
+export async function updateRoomContent(
+  roomId: string,
+  _prevState: { error?: string; success?: boolean } | null,
+  formData: FormData
+) {
+  // Trim, drop blanks; preserve order.
+  const banners = formData
+    .getAll("banners")
+    .map((v) => (typeof v === "string" ? v.trim() : ""))
+    .filter((v) => v.length > 0);
+
+  const rawMarquee = formData.get("marqueeText");
+  const marqueeText =
+    typeof rawMarquee === "string" ? rawMarquee.trim() : "";
+
+  // Basic URL sanity check so we don't ship obviously broken URLs.
+  for (const url of banners) {
+    if (!/^https?:\/\//i.test(url)) {
+      return { error: `Banner URLs must start with http:// or https:// (got "${url}")` };
+    }
+  }
+
+  try {
+    await apiFetch(`/rooms/${roomId}/content`, {
+      method: "PATCH",
+      body: {
+        banners,
+        marqueeText: marqueeText.length > 0 ? marqueeText : null,
+      },
+    });
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+
+  revalidatePath(`/admin/rooms/${roomId}`);
+  return { success: true };
+}
+
 export async function getSessions() {
   return apiFetch<{ sessions: RoomSession[]; }>("/admin/sessions");
 }

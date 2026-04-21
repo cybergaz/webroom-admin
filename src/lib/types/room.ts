@@ -7,6 +7,8 @@ export interface Room {
   createdBy: string;
   hostId?: string;
   createdAt: string;
+  banners?: string[];
+  marqueeText?: string | null;
 }
 
 export interface RoomMember {

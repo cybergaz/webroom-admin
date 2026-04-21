@@ -4,6 +4,7 @@ import { getHosts } from "@/app/actions/hosts";
 import { RoomDetailPanel } from "@/components/org/room-detail-panel";
 import { MemberList } from "@/components/org/member-list";
 import { AssignHostModal } from "@/components/org/assign-host-modal";
+import { RoomContentForm } from "@/components/org/room-content-form";
 import type { Room, RoomMember } from "@/lib/types/room";
 
 export default async function RoomDetailPage({
@@ -40,6 +41,11 @@ export default async function RoomDetailPage({
           currentHostId={room.hostId || undefined}
         />
       </div>
+      <RoomContentForm
+        roomId={roomId}
+        initialBanners={room.banners ?? []}
+        initialMarqueeText={room.marqueeText ?? ""}
+      />
       <MemberList roomId={roomId} members={members} />
     </div>
   );
