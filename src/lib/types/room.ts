@@ -90,23 +90,3 @@ export interface LiveRoom {
   hostName: string | null;
   participants: LiveRoomParticipant[];
 }
-
-export interface TranscriptionEntry {
-  id: string;
-  userId: string;
-  text: string;
-  startTime: string;
-  endTime: string;
-  user: {
-    id: string;
-    name: string;
-  };
-}
-
-export interface SessionWithTranscriptions {
-  id: string;
-  roomId: string;
-  startedAt: string;
-  endedAt?: string;
-  transcriptions: TranscriptionEntry[];
-}

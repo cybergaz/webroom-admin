@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { apiFetch } from "@/lib/api-client";
-import type { Room, RoomSession, RoomWithMembership, LiveRoom, Recording, PttRecording, SessionWithTranscriptions, TranscriptionEntry } from "@/lib/types/room";
+import type { Room, RoomSession, RoomWithMembership, LiveRoom, Recording, PttRecording } from "@/lib/types/room";
 import type { PaginatedResponse } from "@/lib/types/api";
 
 export async function getRooms() {
@@ -197,14 +197,6 @@ export async function getPttRecordings(params?: {
 
 export async function getPttRecordingUrl(recordingId: string) {
   return apiFetch<{ url: string }>(`/admin/ptt-recordings/${recordingId}/url`);
-}
-
-export async function getRoomTranscriptions(roomId: string) {
-  return apiFetch<{ sessions: SessionWithTranscriptions[] }>(`/admin/rooms/${roomId}/transcriptions`);
-}
-
-export async function getSessionTranscriptions(roomId: string, sessionId: string) {
-  return apiFetch<{ transcriptions: TranscriptionEntry[] }>(`/admin/transcriptions/${roomId}/${sessionId}`);
 }
 
 export async function getRoomMembers(roomId: string) {
